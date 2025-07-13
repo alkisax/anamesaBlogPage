@@ -9,7 +9,7 @@ const EditBlogPost = ({ editorJsData, setEditorJsData, backEndUrl}) => {
         setEditorJsData={setEditorJsData}
         backEndUrl={backEndUrl}
         isEditMode={true}
-      />   
+      />
     </>
   )
 }

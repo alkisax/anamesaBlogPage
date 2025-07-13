@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import RenderedEditorJsContent from './RenderedEditorJsContent'
@@ -9,6 +9,40 @@ import EditorJS from '@editorjs/editorjs';
 const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false }) => {
   // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
   const editorRef = useRef(null);
+
+  // Προσθήκη λογικής για custom pages
+  const [pages, setPages] = useState([]);
+  const [selectedPage, setSelectedPage] = useState('');
+  const [newPage, setNewPage] = useState('');
+
+  useEffect(() => {
+    const getpages = async () => {
+      const res = await axios.get(`${backEndUrl}/api/subPages`)
+      setPages(res.data)
+    }
+    getpages()
+  }, [backEndUrl])
+
+  const handlePageSelect = (e) => {
+    const value = e.target.value
+    if (value === '__new__') {
+      setSelectedPage('')
+    } else {
+      setSelectedPage(value)
+    }
+  }
+
+  const handleNewPageSubmit = async () => {
+    if (!newPage) return;
+    try {
+      const res = await axios.post(`${backEndUrl}/api/subPages`, { name: newPage });
+      setPages([...pages, res.data]);
+      setSelectedPage(res.data._id);
+      setNewPage('');
+    } catch (err) {
+      console.error('Error creating page', err);
+    }
+  };
 
   // ✅ σε χωριστό custom hook μεταφέρθηκε όλη η παραμετροποίηση του editorJs
   useInitEditor(editorRef, backEndUrl);
@@ -23,11 +57,13 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
         try {
           const response = await axios.get(`${backEndUrl}/api/posts/${id}`);
           const savedData = response.data.content;
+          const savedSubPage = response.data.subPage || '';
           const editor = editorRef.current;
 
           // Clear and render with existing data
           await editor.isReady;
           editor.render(savedData);
+          setSelectedPage(savedSubPage);
         } catch (error) {
           console.error("Failed to load post for editing:", error);
         }
@@ -56,12 +92,14 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
         // για την αποθήκευση στην Mongo
         if (isEditMode && id) {
           await axios.put(`${backEndUrl}/api/posts/${id}`, {
-            content: outputData
+            content: outputData,
+            subPage: selectedPage
           })
           console.log("✅ Post updated");
         } else {
           await axios.post(`${backEndUrl}/api/posts`, {
-            content: outputData
+            content: outputData,
+            subPage: selectedPage
           })
           console.log("✅ Post created");
         }
@@ -101,6 +139,8 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
     }
   }
 
+  const selectedPageName = pages.find(p => p._id === selectedPage)?.name || ''
+
   return (
     <>
       <div>
@@ -109,6 +149,41 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
           style={{ border: '2px solid blue', padding: '4px', minHeight: '300px' }} 
         />
         <div className='btnDiv flex gap-3 mx-3 justify-center'>
+
+          {/* Προσθήκη λογικής για custom pages */}
+          <div className="w-full max-w-md mx-auto">
+            <select 
+              onChange={handlePageSelect} 
+              value={selectedPage}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select a page</option>
+              {pages.map(p => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+              <option value="__new__">+ Create new page</option>
+            </select>
+
+            {selectedPage === '' && (
+              <div>
+                <input
+                  type="text"
+                  value={newPage}
+                  onChange={e => setNewPage(e.target.value)}
+                  placeholder="New page name"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button 
+                  onClick={handleNewPageSubmit}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Create page
+                </button>
+              </div>
+            )}
+          </div>
+          
+
           <button onClick={handlePreview}>
             preview
           </button>
@@ -119,7 +194,10 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
       </div>
 
       <div>
-        <RenderedEditorJsContent editorJsData={editorJsData} />
+        <RenderedEditorJsContent
+          editorJsData={editorJsData}
+          subPageName={selectedPageName}
+        />
       </div>
     </>
   )

@@ -34,6 +34,10 @@ const Posts = ({ backEndUrl }) => {
         imageIncluded = true;
       }
 
+      if (block.type === 'header') {
+        previewBlocks.push(block);
+      }
+
       if (block.type === 'paragraph') {
         const words = block.data.text.split(/\s+/);
         const remaining = maxWords - wordCount;
