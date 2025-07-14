@@ -28,6 +28,7 @@ export const useInitEditor = (editorRef, backEndUrl) => {
             inlineToolbar: true, // This enables inline tools like bold/italic
             config: {
               placeholder: 'Start writing your text here...',
+              preserveBlank: true,
             },
           },
           header: {

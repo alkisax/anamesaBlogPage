@@ -2403,7 +2403,46 @@ module.exports = {
         }
 ```
 
-- add empty line
+# bug: add empty line
+#### frontend\src\hooks\useInitEditor.js
+```js
+          paragraph: {
+            class: Paragraph,
+            inlineToolbar: true, // This enables inline tools like bold/italic
+            config: {
+              placeholder: 'Start writing your text here...',
+              preserveBlank: true,
+            },
+          },
+```
+
+#### frontend\src\components\RenderedEditorJsContent.jsx
+```jsx
+          if (block.type === 'paragraph') {
+            // με μια console.log είδα  το alignmeent και το παιρνω απο το block.tunes.alignment
+            const alignStyle = {
+              textAlign: block.data.alignment || 'left',
+            };
+
+             // Καθαρίζει το HTML περιεχόμενο για να αποφευχθεί XSS (κακόβουλο script injection)
+            const sanitized = DOMPurify.sanitize(block.data.text);
+             // Ελέγχει αν το κείμενο είναι κενό ή περιέχει μόνο κενά ώστε να αποδοθεί ένα κενό μπλοκ
+            const isEmpty = sanitized.trim() === '';
+  
+            // Αν είναι κενό, δώσε non-breaking space ώστε να αποδοθεί το <p>, αλλιώς δώσε το καθαρισμένο κείμενο
+            return (
+              <p 
+                key={index}
+                style={alignStyle}
+                dangerouslySetInnerHTML={{ 
+                  __html: isEmpty ? '&nbsp;' : sanitized 
+                }}
+              >
+              </p>
+            )
+          }
+```
+
 - delete post
 - upload pdf
 - homepage with subpages as btns

@@ -23,11 +23,20 @@ const RenderedEditorJsContent = ({ editorJsData, subPageName }) => {
             const alignStyle = {
               textAlign: block.data.alignment || 'left',
             };
+
+             // Καθαρίζει το HTML περιεχόμενο για να αποφευχθεί XSS (κακόβουλο script injection)
+            const sanitized = DOMPurify.sanitize(block.data.text);
+             // Ελέγχει αν το κείμενο είναι κενό ή περιέχει μόνο κενά ώστε να αποδοθεί ένα κενό μπλοκ
+            const isEmpty = sanitized.trim() === '';
+  
+            // Αν είναι κενό, δώσε non-breaking space ώστε να αποδοθεί το <p>, αλλιώς δώσε το καθαρισμένο κείμενο
             return (
               <p 
                 key={index}
                 style={alignStyle}
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.data.text) }}
+                dangerouslySetInnerHTML={{ 
+                  __html: isEmpty ? '&nbsp;' : sanitized 
+                }}
               >
               </p>
             )
