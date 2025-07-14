@@ -2290,5 +2290,126 @@ module.exports = {
 };
 ```
 
+### αλλαγές σε front
+#### frontend\src\components\EditorJs.jsx
+```jsx
+  // Προσθήκη λογικής για custom pages
+  const [pages, setPages] = useState([]);
+  const [selectedPage, setSelectedPage] = useState('');
+  const [newPage, setNewPage] = useState('');
+
+  const handlePageSelect = (e) => {
+    const value = e.target.value
+    if (value === '__new__') {
+      setSelectedPage('')
+    } else {
+      setSelectedPage(value)
+    }
+  }
+
+  const handleNewPageSubmit = async () => {
+    if (!newPage) return;
+    try {
+      const res = await axios.post(`${backEndUrl}/api/subPages`, { name: newPage });
+      setPages([...pages, res.data]);
+      setSelectedPage(res.data._id);
+      setNewPage('');
+    } catch (err) {
+      console.error('Error creating page', err);
+    }
+  };
+
+    const handleSubmit = async () => {
+    if(editorRef.current) {
+      try {
+        //  η save() ερχεται απο τον editorjs και επιστρέφει μια υπόσχεση με τα δεδομένα του editor
+        const outputData = await editorRef.current.save()
+        localStorage.setItem('editorData', JSON.stringify(outputData));
+        setEditorJsData(outputData);
+        console.log('Data saved:', outputData);
+
+        // για την αποθήκευση στην Mongo
+        if (isEditMode && id) {
+          await axios.put(`${backEndUrl}/api/posts/${id}`, {
+            content: outputData,
+            subPage: selectedPage
+          })
+          console.log("✅ Post updated");
+        } else {
+          await axios.post(`${backEndUrl}/api/posts`, {
+            content: outputData,
+            subPage: selectedPage
+          })
+          console.log("✅ Post created");
+        }
+      } catch (error) {
+        console.error("saving failed", error)
+      };
+    }
+  }
+
+  const selectedPageName = pages.find(p => p._id === selectedPage)?.name || ''
+
+  return (
+              {/* Προσθήκη λογικής για custom pages */}
+          <div className="w-full max-w-md mx-auto">
+            <select 
+              onChange={handlePageSelect} 
+              value={selectedPage}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select a page</option>
+              {pages.map(p => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+              <option value="__new__">+ Create new page</option>
+            </select>
+
+            {selectedPage === '' && (
+              <div>
+                <input
+                  type="text"
+                  value={newPage}
+                  onChange={e => setNewPage(e.target.value)}
+                  placeholder="New page name"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button 
+                  onClick={handleNewPageSubmit}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Create page
+                </button>
+              </div>
+            )}
+          </div>
+  )
+```
+
+#### frontend\src\pages\Posts.jsx
+```jsx
+  <RenderedEditorJsContent
+    editorJsData={getPreviewContent(post.content)}
+    subPageName={post.subPage?.name}
+  />
+```
+
+#### frontend\src\components\RenderedEditorJsContent.jsx
+```jsx
+        {subPageName &&
+          <p style={{ color: 'gray', fontStyle: 'italic' }}>
+            📄 Page: {subPageName}
+          </p>          
+        }
+```
+
+- add empty line
+- delete post
+- upload pdf
+- homepage with subpages as btns
+- subpage view
+- protected page admin login
+
+ 
 
 

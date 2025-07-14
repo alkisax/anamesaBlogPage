@@ -14,6 +14,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
   const [pages, setPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState('');
   const [newPage, setNewPage] = useState('');
+  // const [originalImageUrls, setOriginalImageUrls] = useState([]);
 
   useEffect(() => {
     const getpages = async () => {
@@ -64,6 +65,13 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
           await editor.isReady;
           editor.render(savedData);
           setSelectedPage(savedSubPage);
+
+          // store original image URLs
+          // const initialImageUrls = savedData.blocks
+          //   .filter(block => block.type === 'image')
+          //   .map(block => block.data.file.url);
+
+          // setOriginalImageUrls(initialImageUrls);
         } catch (error) {
           console.error("Failed to load post for editing:", error);
         }
@@ -106,33 +114,40 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
 
         
         // για επιπλέων αποθήκευση εικόνων στην mongoDB ως base64. Τo axios παραπάνω τα σώζει ως λινκ. πχ http://localhost:3001/uploads/image-1751308923423.jpg
-        const imageBlocks = outputData.blocks.filter(block => block.type === 'image')
+        // const imageBlocks = outputData.blocks.filter(block => block.type === 'image')
 
-        for (const block of imageBlocks) {
-          const imageUrl = block.data.file.url
-          try {
-            // 👇 ΠΑΡΕ ΤΗΝ ΕΙΚΟΝΑ ως arraybuffer (BINARY)
-            const imageResponse = await axios.get(imageUrl, {
-              responseType: 'arraybuffer'
-            })
+        // for (const block of imageBlocks) {
+        //   const imageUrl = block.data.file.url
 
-            // 👇 Convert binary to Blob/File
-            const mimeType = block.data.file.mime || 'image/jpeg';
-            const buffer = imageResponse.data;
-            const file = new File([buffer], 'editor-image.jpg', { type: mimeType });
+          // // ✅ Skip if image already existed in original post
+          // if (originalImageUrls.includes(imageUrl)) {
+          //   console.log(`Skipping already uploaded image: ${imageUrl}`);
+          //   continue;
+          // }
 
-            // 👇 Upload using FormData (required for multer backend)
-            const formData = new FormData();
-            formData.append('image', file);
-            formData.append('name', block.data.caption || 'Image');
-            formData.append('desc', block.data.caption || '');
+          // try {
+          //   // 👇 ΠΑΡΕ ΤΗΝ ΕΙΚΟΝΑ ως arraybuffer (BINARY)
+          //   const imageResponse = await axios.get(imageUrl, {
+          //     responseType: 'arraybuffer'
+          //   })
 
-            await axios.post(`${backEndUrl}/api/images`, formData)
-            console.log('✅ Image sent as JSON to MongoDB');
-          } catch (err) {
-            console.error('❌ Failed to upload image:', err);
-          }
-        }
+          //   // 👇 Convert binary to Blob/File
+          //   const mimeType = block.data.file.mime || 'image/jpeg';
+          //   const buffer = imageResponse.data;
+          //   const file = new File([buffer], 'editor-image.jpg', { type: mimeType });
+
+          //   // 👇 Upload using FormData (required for multer backend)
+          //   const formData = new FormData();
+          //   formData.append('image', file);
+          //   formData.append('name', block.data.caption || 'Image');
+          //   formData.append('desc', block.data.caption || '');
+
+          //   await axios.post(`${backEndUrl}/api/images`, formData)
+          //   console.log('✅ Image sent as JSON to MongoDB');
+          // } catch (err) {
+          //   console.error('❌ Failed to upload image:', err);
+          // }
+        // }
       } catch (error) {
         console.error("saving failed", error)
       };
