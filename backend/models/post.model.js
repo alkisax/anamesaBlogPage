@@ -5,6 +5,11 @@ const postSchema = new mongoose.Schema({
     time: Number,
     blocks: [mongoose.Schema.Types.Mixed],
     version: String
+  },
+  subPage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SubPage',
+    required: true
   }
 }, { timestamps: true });
 

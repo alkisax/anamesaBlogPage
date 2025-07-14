@@ -6,6 +6,7 @@ const swaggerSpec = require('./utils/swagger');
 // const todoRoutes = require('./routes/todo.routes')
 const imgRoutes = require('./routes/img.routes'); 
 const postRoutes = require('./routes/post.routes')
+const subPageRoutes = require('./routes/subPage.routes')
 
 // αυτό ειναι κάτι που ίσως μου χρειαστεί στο deploy και δεν το καταλαβαίνω καλα. (και παρακάτω μαζί με αυτό)
 const path = require('path'); // requires explanation. added for rendering front page subpages
@@ -28,6 +29,7 @@ app.use('/ping', (req, res) => {
 })
 app.use('/api/images', imgRoutes)
 app.use('/api/posts', postRoutes)
+app.use('/api/subPages', subPageRoutes)
 
 // swagger test page
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))

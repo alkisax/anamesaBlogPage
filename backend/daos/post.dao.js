@@ -1,23 +1,28 @@
 const Post = require('../models/post.model');
 
 const getAllPosts = () => {
-  return Post.find({});
+  return Post.find({}).populate('subPage');
 };
 
 const getPostById = async (postId) => {
-  return await Post.findById(postId);
+  return await Post.findById(postId).populate('subPage');
 };
 
-const createPost = (content) => {
-  return Post.create({ content });
+const createPost = (content, subPage) => {
+  return Post.create({ content, subPage });
 };
 
-const editPost = async (postId, content) => {
+const editPost = async (postId, content, subPage) => {
   const post = await Post.findById(postId);
   if (!post) {
     throw new Error('post not found');
   }
   post.content = content;
+
+    if (subPage !== undefined) {
+    post.subPage = subPage;
+  }
+  
   return await post.save();
 };
 

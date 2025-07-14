@@ -6,7 +6,7 @@ const postController = require('../controllers/post.controller')
  * @swagger
  * /api/posts:
  *   post:
- *     summary: Create a new Editor.js post
+ *     summary: Create a new post
  *     tags: [Posts]
  *     requestBody:
  *       required: true
@@ -17,7 +17,8 @@ const postController = require('../controllers/post.controller')
  *             properties:
  *               content:
  *                 type: object
- *                 description: Editor.js output (time, blocks, version)
+ *               subPage:
+ *                 type: string
  *             example:
  *               content:
  *                 time: 1683123123000
@@ -26,11 +27,12 @@ const postController = require('../controllers/post.controller')
  *                     data:
  *                       text: Hello from Swagger!
  *                 version: "2.27.0"
+ *               subPage: "60a7b2c1d6e..."
  *     responses:
- *       201:
+ *       200:
  *         description: Post created
  *       400:
- *         description: Invalid EditorJS content
+ *         description: Invalid input
  *       500:
  *         description: Server error
  */
@@ -79,6 +81,8 @@ router.get('/:postId', postController.getPostById);
 
 /**
  * @swagger
+/**
+ * @swagger
  * /api/posts/{postId}:
  *   put:
  *     summary: Edit a post by ID
@@ -89,7 +93,6 @@ router.get('/:postId', postController.getPostById);
  *         required: true
  *         schema:
  *           type: string
- *         description: The ID of the post to update
  *     requestBody:
  *       required: true
  *       content:
@@ -99,20 +102,22 @@ router.get('/:postId', postController.getPostById);
  *             properties:
  *               content:
  *                 type: object
- *                 properties:
- *                   time:
- *                     type: integer
- *                   blocks:
- *                     type: array
- *                     items:
- *                       type: object
- *                   version:
- *                     type: string
+ *               subPage:
+ *                 type: string
+ *             example:
+ *               content:
+ *                 time: 1683123123000
+ *                 blocks:
+ *                   - type: paragraph
+ *                     data:
+ *                       text: Updated content
+ *                 version: "2.27.0"
+ *               subPage: "60a7b2c1d6e..."
  *     responses:
  *       200:
  *         description: Post successfully updated
  *       400:
- *         description: Invalid EditorJS content
+ *         description: Invalid input
  *       404:
  *         description: Post not found
  *       500:

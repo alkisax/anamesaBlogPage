@@ -1,6 +1,7 @@
 import React from "react";
+import DOMPurify from 'dompurify'; // αυτή η βιβλιοθήκη μπείκε γιατι το editorjsData είναι σε μορφή html που πρέπει να γίνει ρεντερ. αλλά αυτό είναι επικύνδηνο γιατι σημάινει οτι επιτρέπω στον χρίστη να κάνει Inject html
 
-const RenderedEditorJsContent = ({ editorJsData }) => {
+const RenderedEditorJsContent = ({ editorJsData, subPageName }) => {
 
   return (
     <>
@@ -11,6 +12,11 @@ const RenderedEditorJsContent = ({ editorJsData }) => {
         αρχικα ελέγχουμε αν υπάρχει state editorJsData και αν αυτό το state έχει μέσα του blocks
         και μετά με μια map παίρνουμε το κάθε block και το render-αρουμε ανάλογα με τον τύπο του block χρησιμοποιόντας διάφορες συνθήκες if 
         */}
+        {subPageName &&
+          <p style={{ color: 'gray', fontStyle: 'italic' }}>
+            📄 Page: {subPageName}
+          </p>          
+        }
         {editorJsData?.blocks?.map((block, index) => {
           if (block.type === 'paragraph') {
             // με μια console.log είδα  το alignmeent και το παιρνω απο το block.tunes.alignment
@@ -21,8 +27,8 @@ const RenderedEditorJsContent = ({ editorJsData }) => {
               <p 
                 key={index}
                 style={alignStyle}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.data.text) }}
               >
-                  {block.data.text}
               </p>
             )
           }
@@ -35,8 +41,8 @@ const RenderedEditorJsContent = ({ editorJsData }) => {
               <Tag 
                 key={index}
                 style={{ textAlign: alignment }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.data.text) }}
               >
-                {block.data.text}
               </Tag>
             )
           }

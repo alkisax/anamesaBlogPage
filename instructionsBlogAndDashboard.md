@@ -2013,11 +2013,403 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
 }
 export default EditorJs
 ```
+- Paginatinon
 - TODO να αντιστιχίσω τα post σε σελίδες
 - upload pdf
 
 - problem. μπορεί να σωζει πολλαπλες φορές μια εικόνα
 - problem in rendering `<b> <br> gr`
 
+# δημιουργία custom σελίδας απο τον χρίστη και αντιστοιχηση post σε σελίδα
+## Backend αλλαγές για διαχείρηση subPage
+- θα πρέει να γινουν δύο πράγματα δημιουργία backend για subPage με model dao controller routes, και αλλαγές στο model dao controller routes του post για να τα ενσωματώσει
+
+### δημιουργεία back για subPage
+#### backend\app.js
+```js
+const subPageRoutes = require('./routes/subPage.routes')
+app.use('/api/subPages', subPageRoutes)
+```
+
+#### backend\models\subPage.model.js
+```js
+const mongoose = require('mongoose');
+
+const subPageSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    unique: true,
+    required: true,
+    default: 'main'
+  }
+}, { timestamps: true });
+
+module.exports = mongoose.model('SubPage', subPageSchema);
+```
+
+#### backend\daos\subPage.dao.js
+```js
+const SubPage = require('../models/subPage.model');
+
+const getAllSubPages = () => {
+ return SubPage.find({});
+}
+const createSubPage = (name) => {
+  return SubPage.create({ name })
+};
+
+module.exports = {
+  getAllSubPages,
+  createSubPage
+};
+```
+
+#### backend\controllers\subPage.controller.js
+```js
+const subPageDao = require('../daos/subPage.dao');
+
+const createSubPage = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Page name required' });
+    }
+
+    const subPage = await subPageDao.createSubPage(name);
+
+    res.status(200).json(subPage);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create page' });
+  }
+};
+
+const getAllSubpages = async (req, res) => {
+  try {
+    const subPages = await subPageDao.getAllSubPages()
+    res.status(200).json(subPages);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch pages' })
+  }
+}
+
+module.exports = {
+  createSubPage,
+  getAllSubpages,
+};
+```
+
+#### backend\routes\subPage.routes.js
+```js
+const express = require('express');
+const router = express.Router();
+const subPageController = require('../controllers/subPage.controller')
+
+/**
+ * @swagger
+ * /api/subPages:
+ *   post:
+ *     summary: Create a new Editor.js post
+ *     tags: [subPages]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: subPage created
+ *       500:
+ *         description: Server error
+ */
+router.post('/', subPageController.createSubPage)
+
+/**
+ * @swagger
+ * /api/subPages:
+ *   get:
+ *     summary: Get all subPages
+ *     tags: [subPages]
+ *     responses:
+ *       200:
+ *         description: Array of subPages
+ *       500:
+ *         description: Server error
+ */
+router.get('/', subPageController.getAllSubpages)
+
+module.exports = router;
+```
+
+#### αλλαγές σε backend\utils\swagger.js
+```js
+const SubPage = require('../models/subPage.model')
+
+    components: {
+      schemas: {
+        Image: m2s(Image),
+        Post: m2s(Post),
+        SubPage: m2s(SubPage)
+      },
+    },
+```
+
+### αλλαγές σε back posts
+#### backend\models\post.model.js
+```js
+const mongoose = require('mongoose');
+
+const postSchema = new mongoose.Schema({
+  content: {
+    time: Number,
+    blocks: [mongoose.Schema.Types.Mixed],
+    version: String
+  },
+  subPage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SubPage',
+    required: true
+  }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Post', postSchema);
+```
+
+#### backend\daos\post.dao.js
+- πρεπει να μπούν τα populate Και οι αλλαγές στο subpage
+```js
+const Post = require('../models/post.model');
+
+const getAllPosts = () => {
+  return Post.find({}).populate('subPage');
+};
+
+const getPostById = async (postId) => {
+  return await Post.findById(postId).populate('subPage');
+};
+
+const createPost = (content, subPage) => {
+  return Post.create({ content, subPage });
+};
+
+const editPost = async (postId, content, subPage) => {
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw new Error('post not found');
+  }
+  post.content = content;
+
+    if (subPage !== undefined) {
+    post.subPage = subPage;
+  }
+  
+  return await post.save();
+};
+
+module.exports = {
+  getAllPosts,
+  getPostById,
+  createPost,
+  editPost,
+};
+```
+
+#### backend\controllers\post.controller.js
+```js
+// controllers/post.controller.js
+const postDao = require('../daos/post.dao');
+
+const createPost = async (req, res) => {
+  try {
+    const { content, subPage } = req.body;
+
+    if (!content || !content.blocks) {
+      return res.status(400).json({ error: 'Invalid EditorJS content' });
+    }
+
+    const savedPost = await postDao.createPost(content, subPage);
+
+    res.status(200).json(savedPost);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error while saving post' });
+  }
+};
+
+const editPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { content, subPage } = req.body;
+
+    if (!content || !content.blocks) {
+      return res.status(400).json({ error: 'Invalid EditorJS content for edit post' });
+    }
+
+    const savedPost = await postDao.editPost(postId, content, subPage);
+
+    res.status(200).json(savedPost);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error while editing post' });
+  }
+};
+
+const getAllPosts = async (req, res) => {
+  try {
+    const posts = await postDao.getAllPosts()
+    res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error while fetching posts' })
+  }
+}
+
+const getPostById = async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const post = await postDao.getPostById(postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    res.status(200).json(post);
+  } catch (error) {
+    console.error('Get Post Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {
+  createPost,
+  editPost,
+  getPostById,
+  getAllPosts,
+};
+```
+
+### αλλαγές σε front
+#### frontend\src\components\EditorJs.jsx
+```jsx
+  // Προσθήκη λογικής για custom pages
+  const [pages, setPages] = useState([]);
+  const [selectedPage, setSelectedPage] = useState('');
+  const [newPage, setNewPage] = useState('');
+
+  const handlePageSelect = (e) => {
+    const value = e.target.value
+    if (value === '__new__') {
+      setSelectedPage('')
+    } else {
+      setSelectedPage(value)
+    }
+  }
+
+  const handleNewPageSubmit = async () => {
+    if (!newPage) return;
+    try {
+      const res = await axios.post(`${backEndUrl}/api/subPages`, { name: newPage });
+      setPages([...pages, res.data]);
+      setSelectedPage(res.data._id);
+      setNewPage('');
+    } catch (err) {
+      console.error('Error creating page', err);
+    }
+  };
+
+    const handleSubmit = async () => {
+    if(editorRef.current) {
+      try {
+        //  η save() ερχεται απο τον editorjs και επιστρέφει μια υπόσχεση με τα δεδομένα του editor
+        const outputData = await editorRef.current.save()
+        localStorage.setItem('editorData', JSON.stringify(outputData));
+        setEditorJsData(outputData);
+        console.log('Data saved:', outputData);
+
+        // για την αποθήκευση στην Mongo
+        if (isEditMode && id) {
+          await axios.put(`${backEndUrl}/api/posts/${id}`, {
+            content: outputData,
+            subPage: selectedPage
+          })
+          console.log("✅ Post updated");
+        } else {
+          await axios.post(`${backEndUrl}/api/posts`, {
+            content: outputData,
+            subPage: selectedPage
+          })
+          console.log("✅ Post created");
+        }
+      } catch (error) {
+        console.error("saving failed", error)
+      };
+    }
+  }
+
+  const selectedPageName = pages.find(p => p._id === selectedPage)?.name || ''
+
+  return (
+              {/* Προσθήκη λογικής για custom pages */}
+          <div className="w-full max-w-md mx-auto">
+            <select 
+              onChange={handlePageSelect} 
+              value={selectedPage}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select a page</option>
+              {pages.map(p => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+              <option value="__new__">+ Create new page</option>
+            </select>
+
+            {selectedPage === '' && (
+              <div>
+                <input
+                  type="text"
+                  value={newPage}
+                  onChange={e => setNewPage(e.target.value)}
+                  placeholder="New page name"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button 
+                  onClick={handleNewPageSubmit}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Create page
+                </button>
+              </div>
+            )}
+          </div>
+  )
+```
+
+#### frontend\src\pages\Posts.jsx
+```jsx
+  <RenderedEditorJsContent
+    editorJsData={getPreviewContent(post.content)}
+    subPageName={post.subPage?.name}
+  />
+```
+
+#### frontend\src\components\RenderedEditorJsContent.jsx
+```jsx
+        {subPageName &&
+          <p style={{ color: 'gray', fontStyle: 'italic' }}>
+            📄 Page: {subPageName}
+          </p>          
+        }
+```
+
+- add empty line
+- delete post
+- upload pdf
+- homepage with subpages as btns
+- subpage view
+- protected page admin login
+
+ 
 
 
