@@ -1,34 +1,34 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../services/multer.service');
-const imgController = require('../controllers/img.controller');
+const uploadController = require('../controllers/upload.controller');
 
 /**
  * @swagger
- * /api/images:
+ * /api/uploads:
  *   get:
- *     summary: Get all uploaded images
- *     tags: [Images]
+ *     summary: Get all uploaded files
+ *     tags: [Uploads]
  *     responses:
  *       200:
- *         description: A list of uploaded images
+ *         description: A list of uploaded files
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Image'
+ *                 $ref: '#/components/schemas/Upload'
  *       500:
  *         description: Server error
  */
-router.get('/', imgController.renderImagePage);
+router.get('/', uploadController.renderUploadPage);
 
 /**
  * @swagger
- * /api/images:
+ * /api/uploads:
  *   post:
- *     summary: Upload a new image
- *     tags: [Images]
+ *     summary: Upload a new file
+ *     tags: [Uploads]
  *     requestBody:
  *       required: true
  *       content:
@@ -45,10 +45,10 @@ router.get('/', imgController.renderImagePage);
  *                 format: binary
  *     responses:
  *       200:
- *         description: Image uploaded successfully
+ *         description: file uploaded successfully
  *       500:
  *         description: Upload failed
  */
-router.post('/', upload.single('image'), imgController.uploadImage);
+router.post('/', upload.single('image'), uploadController.uploadFile);
 
 module.exports = router;

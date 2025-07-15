@@ -4,7 +4,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./utils/swagger');
 // θα προστεθούν πολλα τέτοια endpoints οπως προχωρά η εφαρμογη
 // const todoRoutes = require('./routes/todo.routes')
-const imgRoutes = require('./routes/img.routes'); 
+const uploadRoutes = require('./routes/upload.routes'); 
 const postRoutes = require('./routes/post.routes')
 const subPageRoutes = require('./routes/subPage.routes')
 
@@ -27,7 +27,7 @@ app.use((req, res, next) => {
 app.use('/ping', (req, res) => {
   res.status(200).json({ message: 'pong' });
 })
-app.use('/api/images', imgRoutes)
+app.use('/api/uploads', uploadRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/subPages', subPageRoutes)
 

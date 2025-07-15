@@ -10,6 +10,7 @@ import List from '@editorjs/list';
 import Marker from '@editorjs/marker';
 import InlineCode from '@editorjs/inline-code';
 import ImageTool from '@editorjs/image';
+import AttachesTool from '@editorjs/attaches';
 
 import AlignmentTuneTool from 'editorjs-text-alignment-blocktune'; // δεν είχε justify alignment αλλά είχε διαφορ καλά για headers και list Οπότε το κρατάω και χρησιμοποιω το Pargraph-with-alignment για το justify
 import Paragraph from 'editorjs-paragraph-with-alignment';
@@ -60,9 +61,20 @@ export const useInitEditor = (editorRef, backEndUrl) => {
             class: ImageTool,
             config: {
               endpoints: {
-                byFile: `${backEndUrl}/api/images`,
+                // byFile: `${backEndUrl}/api/images`,
+                byFile: `${backEndUrl}/api/uploads`,
               },
             },
+          },
+          attaches: {
+            class: AttachesTool,
+            config: {
+              endpoint: `${backEndUrl}/api/uploads`, 
+              field: 'image', // ← keep same as multer config - that’s just the field name — it can still handle any file types as long as your multer config accepts them
+              types: '.pdf,.doc,.docx,.txt,.zip',
+              buttonText: 'Upload File',
+              errorMessage: 'Upload failed'
+            }
           },
         },
         onReady: () => {

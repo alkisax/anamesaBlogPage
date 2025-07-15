@@ -114,6 +114,18 @@ const RenderedEditorJsContent = ({ editorJsData, subPageName }) => {
               </div>
             );
           }
+          if (block.type === 'attaches') {
+            const { file, title } = block.data;
+            const fileName = title || file?.name || file?.url?.split('/').pop(); // fallback to filename from URL
+
+            return (
+              <div key={index} className="my-2">
+                file: <a href={file.url} target="_blank" rel="noopener noreferrer">
+                  {fileName}
+                </a>
+              </div>
+            );
+          }
           if (block.type === 'inlineCode') {
             return <code key={index}>{block.data.code}</code>;
           }

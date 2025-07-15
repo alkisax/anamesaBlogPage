@@ -97,7 +97,6 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
         setEditorJsData(outputData);
         console.log('Data saved:', outputData);
 
-        // για την αποθήκευση στην Mongo
         if (isEditMode && id) {
           await axios.put(`${backEndUrl}/api/posts/${id}`, {
             content: outputData,
@@ -112,7 +111,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
           console.log("✅ Post created");
         }
 
-        
+        // για την αποθήκευση στην Mongo        
         // για επιπλέων αποθήκευση εικόνων στην mongoDB ως base64. Τo axios παραπάνω τα σώζει ως λινκ. πχ http://localhost:3001/uploads/image-1751308923423.jpg
         // const imageBlocks = outputData.blocks.filter(block => block.type === 'image')
 

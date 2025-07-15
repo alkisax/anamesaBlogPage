@@ -2,11 +2,11 @@
 const fs = require('fs').promises;  // note: require fs.promises
 // Node.js's built-in path module, which helps you safely work with file and folder paths
 const path = require('path');
-const imgDao = require('../daos/img.dao');
+const uploadDao = require('../daos/upload.dao');
 
-const renderImagePage = async (req, res) => {
+const renderUploadPage = async (req, res) => {
   try {
-    const items = await imgDao.getAllImages();
+    const items = await uploadDao.getAllUploads();
     res.json(items);
   } catch (err) {
     console.error(err);
@@ -15,8 +15,8 @@ const renderImagePage = async (req, res) => {
 };
 
 
-const uploadImage = async (req, res) => {
-  console.log('enter uploadImage controller' );
+const uploadFile = async (req, res) => {
+  console.log('enter uploadFile controller' );
   //ελενγχουμε το req απο τον client αν έχει οτι χρειάζεται
   try {
     if (!req?.file?.path) {
@@ -36,21 +36,25 @@ const uploadImage = async (req, res) => {
     const obj = {
       name: req.body.name,
       desc: req.body.desc || '',
-      img: {
+      file: {
         data,
-        contentType: req.file.mimetype
+        contentType: req.file.mimetype,
+        originalName: req.file.originalname,
+        filename: req.file.filename 
       }
     };
-    console.log('Image object:', obj);
+    console.log('Upload object:', obj);
     
-    // εδω με το imgDao το στελνουμε στην mongo ή αποθήκευση ως αρχείο έχει γίνει ήδη απο τον multer middleware
-    await imgDao.createImage(obj);
+    // εδω με το uploadDao το στελνουμε στην mongo ή αποθήκευση ως αρχείο έχει γίνει ήδη απο τον multer middleware
+    const saved = await uploadDao.createUpload(obj);
 
     // το res πρέπει να γίνει σε άλλη μορφή για να ταιριάζει με τις προυποθέσεις του editroJs
     res.status(200).json({
       success: 1,
       file: {
         url: `http://localhost:3001/uploads/${req.file.filename}`,
+        name: saved.name,
+        type: saved.file.contentType
       },
     });
     // res.status(200).json({ message: 'image uploaded' });
@@ -60,8 +64,7 @@ const uploadImage = async (req, res) => {
   }
 };
 
-
 module.exports = {
-  renderImagePage,
-  uploadImage
+  renderUploadPage,
+  uploadFile
 };
