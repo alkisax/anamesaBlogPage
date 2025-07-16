@@ -51,4 +51,27 @@ router.get('/', uploadController.renderUploadPage);
  */
 router.post('/', upload.single('image'), uploadController.uploadFile);
 
+/**
+ * @swagger
+ * /api/uploads/{id}:
+ *   delete:
+ *     summary: Delete an uploaded file by ID
+ *     tags: [Uploads]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The upload ID
+ *     responses:
+ *       200:
+ *         description: File deleted successfully
+ *       404:
+ *         description: File not found
+ *       500:
+ *         description: Failed to delete file
+ */
+router.delete('/:id', uploadController.deleteUpload);
+
 module.exports = router;

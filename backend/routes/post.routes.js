@@ -125,4 +125,27 @@ router.get('/:postId', postController.getPostById);
  */
 router.put('/:postId', postController.editPost);
 
+/**
+ * @swagger
+ * /api/posts/{postId}:
+ *   delete:
+ *     summary: Delete a post by ID
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the post to delete
+ *     responses:
+ *       200:
+ *         description: Post deleted successfully
+ *       404:
+ *         description: Post not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:postId', postController.deletePost);
+
 module.exports = router;

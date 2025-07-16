@@ -24,6 +24,18 @@ const UploadedFiles = ({ backEndUrl }) => {
     navigate('/');
   }
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
+
+    try {
+      await axios.delete(`${backEndUrl}/api/uploads/${id}`);
+      setFiles((prev) => prev.filter((file) => file._id !== id));
+    } catch (err) {
+      console.error("Error deleting file", err);
+      alert("Failed to delete file.");
+    }
+  };
+
   const getFileIconOrPreview = (file) => {
     const type = file.file?.contentType;
 
@@ -65,6 +77,7 @@ const UploadedFiles = ({ backEndUrl }) => {
               <th className="border border-gray-300 px-4 py-2">Preview</th>
               <th className="border border-gray-300 px-4 py-2">Filename</th>
               <th className="border border-gray-300 px-4 py-2">Link</th>
+              <th className="border border-gray-300 px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -91,6 +104,14 @@ const UploadedFiles = ({ backEndUrl }) => {
                     >
                       {fileUrl}
                     </a>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <button
+                      onClick={() => handleDelete(file._id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               );

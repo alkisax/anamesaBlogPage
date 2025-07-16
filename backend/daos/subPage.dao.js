@@ -7,6 +7,10 @@ const createSubPage = (name) => {
   return SubPage.create({ name })
 };
 
+const deleteSubPage = (subPageId) => {
+  return SubPage.findByIdAndDelete(subPageId);
+};
+
 module.exports = {
   getAllSubPages,
   createSubPage

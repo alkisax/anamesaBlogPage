@@ -70,7 +70,28 @@ const uploadFile = async (req, res) => {
   }
 };
 
+const deleteUpload = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const upload = await uploadDao.deleteUpload(id);
+    if (!upload) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    // Remove the file from disk (uploads folder)
+    const filePath = path.join(__dirname, '..', 'uploads', upload.file.filename);
+    await fs.unlink(filePath).catch(() => console.warn('File already deleted or missing'));
+
+    res.status(200).json({ message: 'File deleted successfully' });
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ error: 'Failed to delete file' });
+  }
+};
+
 module.exports = {
   renderUploadPage,
-  uploadFile
+  uploadFile,
+  deleteUpload
 };

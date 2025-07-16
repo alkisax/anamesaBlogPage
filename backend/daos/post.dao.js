@@ -26,9 +26,14 @@ const editPost = async (postId, content, subPage) => {
   return await post.save();
 };
 
+const deletePost = (postId) => {
+  return Post.findByIdAndDelete(postId);
+};
+
 module.exports = {
   getAllPosts,
   getPostById,
   createPost,
   editPost,
+  deletePost
 };
