@@ -3,6 +3,9 @@ import { Link } from "react-router-dom"
 import { useParams  } from 'react-router-dom';
 import axios from 'axios';
 import RenderedEditorJsContent from "../components/RenderedEditorJsContent";
+import { getPreviewContent } from "../utils/editorHelper";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 const Subpage = ({ backEndUrl, forcedName }) => {
   const [loading, setLoading] = useState(true)
@@ -34,54 +37,16 @@ const Subpage = ({ backEndUrl, forcedName }) => {
 
   const { name: paramName } = useParams();
   const name = forcedName || paramName;
-  const currentPage = pages.find((page) => page.name === name)
-  const currentPageId = currentPage?._id
+  const currentSubPage = pages.find((page) => page.name === name)
+  const currentPageId = currentSubPage?._id
   const filteredPosts = posts.filter(
     (post) => post.subPage?._id === currentPageId
   )
+  const sortedPosts = [...filteredPosts].sort((a, b) => b.pinned - a.pinned);
 
-  // αυτή η συνάρτηση κρατάει μόνο την πρώτη εικόνα και τις πρώτες 70 λέξεις. Σε μεγάλο βαθμό απο GPT
-  const getPreviewContent = (content, maxWords = 70) => {
-    const previewBlocks = [];
-    let wordCount = 0;
-    let imageIncluded = false;
-
-    for (const block of content.blocks) {
-      if (block.type === 'image' && !imageIncluded) {
-        previewBlocks.push(block);
-        imageIncluded = true;
-      }
-
-      if (block.type === 'header') {
-        previewBlocks.push(block);
-      }
-
-      if (block.type === 'paragraph') {
-        const words = block.data.text.split(/\s+/);
-        const remaining = maxWords - wordCount;
-
-        if (remaining <= 0) break;
-
-        const trimmedWords = words.slice(0, remaining);
-        previewBlocks.push({
-          ...block,
-          data: {
-            ...block.data,
-            text: trimmedWords.join(' ') + (words.length > remaining ? '...' : '')
-          }
-        });
-
-        wordCount += trimmedWords.length;
-      }
-
-      if (wordCount >= maxWords && imageIncluded) break;
-    }
-
-    return {
-      ...content,
-      blocks: previewBlocks
-    };
-  };
+  // Use pagination on sortedPosts
+  const { currentItems: currentPosts, pageCount, currentPage, handlePageClick, goToPage } =
+  usePagination(sortedPosts, 10);
 
   return (
     <>
@@ -91,7 +56,9 @@ const Subpage = ({ backEndUrl, forcedName }) => {
 
         <div className="grid gap-6">
             {!loading && posts.length !== 0 &&
-              filteredPosts.map((post) => (
+              [...currentPosts]
+                .sort((a, b) => b.pinned - a.pinned)
+                .map((post) => (
                 <Link to={`/posts/${post._id}`}>
                   <div 
                     key={post._id}
@@ -109,7 +76,15 @@ const Subpage = ({ backEndUrl, forcedName }) => {
                 </Link>
               ))
             }        
-        </div>    
+        </div>
+        <Pagination
+          loading={loading}
+          posts={sortedPosts} // Pass the full list, not paginated
+          goToPage={goToPage}
+          currentPage={currentPage}
+          pageCount={pageCount}
+          handlePageClick={handlePageClick}
+        /> 
       </div>
     </>
   )

@@ -19,6 +19,8 @@ const postController = require('../controllers/post.controller')
  *                 type: object
  *               subPage:
  *                 type: string
+ *               pinned:
+ *                 type: boolean
  *             example:
  *               content:
  *                 time: 1683123123000
@@ -28,6 +30,7 @@ const postController = require('../controllers/post.controller')
  *                       text: Hello from Swagger!
  *                 version: "2.27.0"
  *               subPage: "60a7b2c1d6e..."
+ *               pinned: true
  *     responses:
  *       200:
  *         description: Post created
@@ -104,6 +107,8 @@ router.get('/:postId', postController.getPostById);
  *                 type: object
  *               subPage:
  *                 type: string
+ *               pinned:
+ *                 type: boolean
  *             example:
  *               content:
  *                 time: 1683123123000
@@ -113,6 +118,7 @@ router.get('/:postId', postController.getPostById);
  *                       text: Updated content
  *                 version: "2.27.0"
  *               subPage: "60a7b2c1d6e..."
+ *               pinned: true
  *     responses:
  *       200:
  *         description: Post successfully updated

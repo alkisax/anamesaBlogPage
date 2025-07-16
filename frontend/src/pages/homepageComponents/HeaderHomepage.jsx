@@ -24,15 +24,20 @@ function HeaderHomepage({ backEndUrl }) {
   return (
     <div className="w-full">
       {/* Header */}
-      <header className="flex items-center justify-between bg-gray-800 text-white p-4">
-        <h1 className="text-xl font-bold">My Blog</h1>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="text-2xl focus:outline-none"
-        >
-          ☰
-        </button>
-      </header>
+      <>
+        <Link to={`/`}>
+            <header className="flex items-center justify-between bg-gray-800 text-white p-4">
+            <h1 className="text-xl font-bold">My Blog</h1>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="text-2xl focus:outline-none"
+            >
+              ☰
+            </button>
+          </header>
+        </Link>      
+      </>
+
 
       {/* Sidebar (shows when menuOpen = true) */}
       {menuOpen && (

@@ -10,6 +10,10 @@ const postSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'SubPage',
     required: true
+  },
+  pinned: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

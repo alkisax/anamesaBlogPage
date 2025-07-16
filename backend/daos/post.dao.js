@@ -8,19 +8,23 @@ const getPostById = async (postId) => {
   return await Post.findById(postId).populate('subPage');
 };
 
-const createPost = (content, subPage) => {
-  return Post.create({ content, subPage });
+const createPost = (content, subPage, pinned) => {
+  return Post.create({ content, subPage, pinned });
 };
 
-const editPost = async (postId, content, subPage) => {
+const editPost = async (postId, content, subPage, pinned) => {
   const post = await Post.findById(postId);
   if (!post) {
     throw new Error('post not found');
   }
   post.content = content;
 
-    if (subPage !== undefined) {
+  if (subPage !== undefined) {
     post.subPage = subPage;
+  }
+
+    if (pinned !== undefined) {
+    post.pinned = pinned;
   }
   
   return await post.save();

@@ -6,7 +6,6 @@ const RenderedEditorJsContent = ({ editorJsData, subPageName }) => {
   return (
     <>
       <div>
-        <h2>EditorJs Data</h2>
         {/* 
          to render ηταν δύσκολο και συμβουλευτικα αρκετα το gpt
         αρχικα ελέγχουμε αν υπάρχει state editorJsData και αν αυτό το state έχει μέσα του blocks
