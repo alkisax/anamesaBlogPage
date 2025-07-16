@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import Posts from './pages/Posts'
 import BlogPost from './pages/BlogPost';
 import EditBlogPost from './pages/EditBlogPost';
+import UploadedFiles from './pages/UploadedFiles'
 
 function App() {
   const [editorJsData, setEditorJsData] = useState({})
@@ -46,6 +47,13 @@ function App() {
                 backEndUrl={backEndUrl}
                 isEditMode={true}
               />}
+            />
+
+            <Route 
+              path="/uploads" 
+              element={<UploadedFiles 
+                backEndUrl={backEndUrl}
+              />} 
             />
 
           </Routes>

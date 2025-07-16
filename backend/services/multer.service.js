@@ -10,8 +10,9 @@ const storage = multer.diskStorage({
   },
   // πως θα ονομαστεί το αρχείο όταν αποθηκευτεί
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + Date.now() + ext);
+    // const ext = path.extname(file.originalname);
+    // cb(null, file.fieldname + '-' + Date.now() + ext);
+    cb(null, file.originalname);
   }
 });
 
@@ -22,11 +23,19 @@ const upload = multer({
   // Το fileFilter είναι μια συνάρτηση που ελέγχει κάθε αρχείο πριν αποθηκευτεί.
   fileFilter: (req, file, cb) => {
     console.log('reached multer upload');
+    
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt', '.doc', '.docx'];
+    
     // παιρνει τοn τύπο του αρχειου πχ png jpg κλπ
-    const ext = path.extname(file.originalname);
+    const ext = path.extname(file.originalname).toLowerCase();
     console.log('Uploading file:', file.originalname, file.mimetype);
+    
     // callback συνάρτηση που πρέπει να καλέσεις για να πεις αν αποδεχεσαι το αρχείο ή όχι.
-    cb(null, true);
+    if (allowedExtensions.includes(ext)){
+      cb(null, true);
+    } else {
+      cb(new Error('Only images, PDF, txt, and Word documents are allowed'), false);
+    }
   }
 });
 

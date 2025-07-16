@@ -2403,9 +2403,439 @@ module.exports = {
         }
 ```
 
-- add empty line
+# bug: add empty line
+#### frontend\src\hooks\useInitEditor.js
+```js
+          paragraph: {
+            class: Paragraph,
+            inlineToolbar: true, // This enables inline tools like bold/italic
+            config: {
+              placeholder: 'Start writing your text here...',
+              preserveBlank: true,
+            },
+          },
+```
+
+#### frontend\src\components\RenderedEditorJsContent.jsx
+```jsx
+          if (block.type === 'paragraph') {
+            // με μια console.log είδα  το alignmeent και το παιρνω απο το block.tunes.alignment
+            const alignStyle = {
+              textAlign: block.data.alignment || 'left',
+            };
+
+             // Καθαρίζει το HTML περιεχόμενο για να αποφευχθεί XSS (κακόβουλο script injection)
+            const sanitized = DOMPurify.sanitize(block.data.text);
+             // Ελέγχει αν το κείμενο είναι κενό ή περιέχει μόνο κενά ώστε να αποδοθεί ένα κενό μπλοκ
+            const isEmpty = sanitized.trim() === '';
+  
+            // Αν είναι κενό, δώσε non-breaking space ώστε να αποδοθεί το <p>, αλλιώς δώσε το καθαρισμένο κείμενο
+            return (
+              <p 
+                key={index}
+                style={alignStyle}
+                dangerouslySetInnerHTML={{ 
+                  __html: isEmpty ? '&nbsp;' : sanitized 
+                }}
+              >
+              </p>
+            )
+          }
+```
+
+# upload pdf
+εκανα rename όλο το back απο Image σε upload. αυτό μου δημιουργησε προβλήματα γιατι διαφορα στο front ηταν ως image. επειδή έγινε πολύ μπλέξιμο το έχω αφήσει έτσι να είναι κάπου image και κάπου upload
+
+## back
+#### backend\app.js
+```js
+const uploadRoutes = require('./routes/upload.routes'); 
+const postRoutes = require('./routes/post.routes')
+const subPageRoutes = require('./routes/subPage.routes')
+app.use('/api/uploads', uploadRoutes)
+app.use('/api/posts', postRoutes)
+app.use('/api/subPages', subPageRoutes)
+// ✅ SERVE UPLOADS BEFORE DIST
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+```
+
+#### backend\services\multer.service.js
+```js
+const multer = require('multer');
+const path = require('path');
+
+// μέθοδος που δημιουργεί έναν τρόπο αποθήκευσης αρχείων στο δίσκο (στον υπολογιστή). Με αυτήν καθορίζουμε πού θα αποθηκευτεί το αρχείο και πώς θα ονομαστεί.
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log('reached multer service');   
+    // null -> το δεχόμαστε, path.join(__dirname, '../uploads') -> ο φάκελος που θα αποθηκευτούν τα αρχεία
+    cb(null, path.join(__dirname, '../uploads'));
+  },
+  // πως θα ονομαστεί το αρχείο όταν αποθηκευτεί
+  filename: (req, file, cb) => {
+    // const ext = path.extname(file.originalname);
+    // cb(null, file.fieldname + '-' + Date.now() + ext);
+    cb(null, file.originalname);
+  }
+});
+
+// αυτό είναι ένας middleware που θα πιάσει το αρχείο που θα στείλει ο χρήστης και θα το αποθηκεύσει στον φάκελο uploads
+const upload = multer({ 
+  // καθοριζει που θα αποθηκεύονται τα αρχεία οριζετε στην παραπάνω const
+  storage,
+  // Το fileFilter είναι μια συνάρτηση που ελέγχει κάθε αρχείο πριν αποθηκευτεί.
+  fileFilter: (req, file, cb) => {
+    console.log('reached multer upload');
+    
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt', '.doc', '.docx'];
+    
+    // παιρνει τοn τύπο του αρχειου πχ png jpg κλπ
+    const ext = path.extname(file.originalname).toLowerCase();
+    console.log('Uploading file:', file.originalname, file.mimetype);
+    
+    // callback συνάρτηση που πρέπει να καλέσεις για να πεις αν αποδεχεσαι το αρχείο ή όχι.
+    if (allowedExtensions.includes(ext)){
+      cb(null, true);
+    } else {
+      cb(new Error('Only images, PDF, txt, and Word documents are allowed'), false);
+    }
+  }
+});
+
+module.exports = upload;
+```
+
+#### backend\models\upload.model.js
+```js
+const mongoose = require('mongoose');
+
+const uploadSchema  = new mongoose.Schema({
+  name: String,
+  desc: String,
+  file: {
+    data: Buffer,
+    contentType: String,
+    originalName: String
+  }
+});
+
+module.exports = mongoose.model('Upload', uploadSchema );
+```
+
+#### backend\daos\upload.dao.js
+```js
+const Upload = require('../models/upload.model');
+
+const getAllUploads = () => {
+ return Upload.find({});
+}
+const createUpload = (imageData) => {
+  return Upload.create(imageData)
+};
+
+module.exports = {
+  getAllUploads,
+  createUpload
+};
+```
+
+#### backend\controllers\upload.controller.js
+```js
+// fs = files system
+const fs = require('fs').promises;  // note: require fs.promises
+// Node.js's built-in path module, which helps you safely work with file and folder paths
+const path = require('path');
+const uploadDao = require('../daos/upload.dao');
+
+const renderUploadPage = async (req, res) => {
+  try {
+    const items = await uploadDao.getAllUploads();
+    console.log("Mongo items count:", items.length);
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+};
+
+
+const uploadFile = async (req, res) => {
+  console.log('enter uploadFile controller' );
+  //ελενγχουμε το req απο τον client αν έχει οτι χρειάζεται
+  try {
+    if (!req?.file?.path) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // το filepath και το obj τα παίρνουμε από το req.file που έχει δημιουργηθεί από το multer middleware
+    const filePath = req.file.path; 
+    console.log('File path:', filePath);
+    
+    //Όταν το readFile() τελειώσει: Αν όλα πήγαν καλά, αποθηκεύει το περιεχόμενο του αρχείου (σε μορφή Buffer) στη μεταβλητή data. Αυτός ο Buffer είναι το "raw binary" του αρχείου. Αν και το multer έχει ήδη αποθηκεύσει το αρχείο στο φάκελο uploads, εμείς εδώ το διαβάζουμε ξανά: 👉 για να το μετατρέψουμε σε binary δεδομένα,👉 ώστε να το αποθηκεύσουμε μέσα στη MongoDB (σε ένα document, όχι ως αρχείο στο δίσκο).
+    // Συμαντικό: για να λειτουργήσει το fs.readFile() πρέπει να χρησιμοποιήσουμε την υπόσχεση (Promise) του fs.promises, όχι το απλό fs: επάνω στις δηλώσεις: const fs = require('fs').promises;
+    const data = await fs.readFile(filePath); 
+    console.log('data:', data);
+    
+
+    const obj = {
+      name: req.body.name,
+      desc: req.body.desc || '',
+      file: {
+        data,
+        contentType: req.file.mimetype,
+        originalName: req.file.originalname,
+        filename: req.file.filename,
+        size: req.file.size,
+        extension: path.extname(req.file.originalname).slice(1)        
+      }
+    };
+    console.log('Upload object:', obj);
+    
+    // εδω με το uploadDao το στελνουμε στην mongo ή αποθήκευση ως αρχείο έχει γίνει ήδη απο τον multer middleware
+    const saved = await uploadDao.createUpload(obj);
+
+    // το res πρέπει να γίνει σε άλλη μορφή για να ταιριάζει με τις προυποθέσεις του editroJs
+    res.status(200).json({
+      success: 1,
+      file: {
+        url: `http://localhost:3001/uploads/${req.file.filename}`,
+        name: saved.name,
+        size: saved.file.size,
+        type: saved.file.contentType,
+        extension: saved.file.extension,
+        filename: saved.file.filename
+      },
+    });
+    // res.status(200).json({ message: 'image uploaded' });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).send('Upload failed');
+  }
+};
+
+module.exports = {
+  renderUploadPage,
+  uploadFile
+};
+```
+
+#### backend\routes\upload.routes.js
+```js
+const express = require('express');
+const router = express.Router();
+const upload = require('../services/multer.service');
+const uploadController = require('../controllers/upload.controller');
+
+/**
+ * @swagger
+ * /api/uploads:
+ *   get:
+ *     summary: Get all uploaded files
+ *     tags: [Uploads]
+ *     responses:
+ *       200:
+ *         description: A list of uploaded files
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Upload'
+ *       500:
+ *         description: Server error
+ */
+router.get('/', uploadController.renderUploadPage);
+
+/**
+ * @swagger
+ * /api/uploads:
+ *   post:
+ *     summary: Upload a new file
+ *     tags: [Uploads]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               desc:
+ *                 type: string
+ *               image:
+ *                 type: file
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: file uploaded successfully
+ *       500:
+ *         description: Upload failed
+ */
+router.post('/', upload.single('image'), uploadController.uploadFile);
+
+module.exports = router;
+```
+
+## front
+#### frontend\src\App.jsx
+```jsx
+            <Route 
+              path="/uploads" 
+              element={<UploadedFiles 
+                backEndUrl={backEndUrl}
+              />} 
+            />
+```
+
+- προστέθηκε ένα ακόμα εργαλείο στο editor js
+```bash
+npm install @editorjs/attaches
+```
+#### frontend\src\hooks\useInitEditor.js
+```js
+import AttachesTool from '@editorjs/attaches';
+
+          attaches: {
+            class: AttachesTool,
+            config: {
+              endpoint: `${backEndUrl}/api/uploads`, 
+              field: 'image', // ← keep same as multer config - that’s just the field name — it can still handle any file types as long as your multer config accepts them
+              types: '.pdf,.doc,.docx,.txt,.zip',
+              buttonText: 'Upload File',
+              errorMessage: 'Upload failed'
+            }
+          },
+```
+- το οποίο θα πρέπει να γίνει και ρεντερ με ένα ακόμα if
+#### frontend\src\components\RenderedEditorJsContent.jsx
+```jsx
+          if (block.type === 'attaches') {
+            const { file, title } = block.data;
+            const fileName = title || file?.name || file?.url?.split('/').pop(); // fallback to filename from URL
+
+            return (
+              <div key={index} className="my-2">
+                file: <a href={file.url} target="_blank" rel="noopener noreferrer">
+                  {fileName}
+                </a>
+              </div>
+            );
+          }
+```
+
+#### frontend\src\pages\UploadedFiles.jsx
+```jsx
+import { useEffect, useState } from "react";
+import axios from 'axios'
+import { useNavigate  } from 'react-router-dom';
+
+const UploadedFiles = ({ backEndUrl }) => {
+  const [files, setFiles] = useState([])
+
+  useEffect(() => {
+    const getUploads = async () => {
+      try {
+        const res = await axios.get (`${backEndUrl}/api/uploads`)
+        console.log(res)
+        setFiles(res.data)
+      } catch (err) {
+        console.error('Error fetching uploads', err);
+      }
+    }
+    getUploads()
+  },[backEndUrl])
+ 
+  const navigate = useNavigate();
+
+  const navigateToHome = () => {
+    navigate('/');
+  }
+
+  const getFileIconOrPreview = (file) => {
+    const type = file.file?.contentType;
+
+    if (type?.startsWith("image/")) {
+      // ✅ Thumbnail preview for images
+      return (
+        <img
+          src={`${backEndUrl}/uploads/${file.file.filename}`}
+          alt={file.name || "image"}
+          className="w-16 h-16 object-cover rounded border"
+        />
+      );
+    } else if (type === "application/pdf") {
+      return <span className="text-red-500 font-bold text-xl">📄 PDF</span>;
+    } else if (type?.includes("word")) {
+      return <span className="text-blue-500 font-bold text-xl">📝 Word</span>;
+    } else if (type === "text/plain") {
+      return <span className="text-gray-700 font-bold text-xl">📃 TXT</span>;
+    }
+    return <span className="text-gray-500">📎 File</span>;
+  };
+
+
+  return (
+    <>
+      <button
+        onClick={navigateToHome}
+        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+      >
+        Home
+      </button>
+
+      <div className="p-4">
+        <h1 className="text-xl mb-4">Uploaded Files</h1>
+
+        <table className="table-auto w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th className="border border-gray-300 px-4 py-2">Preview</th>
+              <th className="border border-gray-300 px-4 py-2">Filename</th>
+              <th className="border border-gray-300 px-4 py-2">Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {files.map((file) => {
+              const fileUrl = `${backEndUrl}/uploads/${file.file?.filename}`;
+              return (
+                <tr key={file._id}>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {getFileIconOrPreview(file)}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {file.name || file.file?.originalName || "Untitled"}
+                    <br />
+                    <small className="text-gray-600">
+                      {file.file?.contentType}
+                    </small>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 break-all">
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 underline"
+                    >
+                      {fileUrl}
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+export default UploadedFiles
+```
+
+
+
 - delete post
-- upload pdf
 - homepage with subpages as btns
 - subpage view
 - protected page admin login

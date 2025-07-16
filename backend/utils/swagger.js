@@ -1,5 +1,5 @@
 const m2s = require('mongoose-to-swagger');
-const Image = require('../models/img.model')
+const Upload = require('../models/upload.model')
 const Post = require('../models/post.model')
 const SubPage = require('../models/subPage.model')
 const swaggerJsdoc = require('swagger-jsdoc')
@@ -14,7 +14,7 @@ const options = {
     },
     components: {
       schemas: {
-        Image: m2s(Image),
+        uploads: m2s(Upload),
         Post: m2s(Post),
         SubPage: m2s(SubPage)
       },

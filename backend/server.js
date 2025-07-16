@@ -8,7 +8,7 @@ mongoose.set('strictQuery', false);
 // συνδεση με την MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log('connected to MongoDB');
+    console.log('connected to MongoDB', mongoose.connection.name);
     console.log('Routes setup complete. Starting server...');
 // εδώ είναι το βασικό listen PORT μου
     app.listen(PORT, () => {
