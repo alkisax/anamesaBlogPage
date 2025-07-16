@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import './App.css'
 import {BrowserRouter, Routes, Route} from "react-router-dom";
-import HomePage from './pages/HomePage';
+import Layout from "./layouts/Layout";
+import Homepage from './pages/Homepage'
+import Dashboard from './pages/Dashboard';
 import Posts from './pages/Posts'
+import Subpage from './pages/Subpage'
 import BlogPost from './pages/BlogPost';
 import EditBlogPost from './pages/EditBlogPost';
 import UploadedFiles from './pages/UploadedFiles'
@@ -15,10 +18,24 @@ function App() {
   return (
     <>
       <BrowserRouter>
+
+        
           <Routes>
+            {/* Parent route with Layout */}
+            <Route element={<Layout backEndUrl={backEndUrl} />}>
+
             <Route 
               path="/" 
-              element={<HomePage 
+              element={<Homepage 
+                editorJsData={editorJsData} 
+                setEditorJsData={setEditorJsData}
+                backEndUrl={backEndUrl}
+              />}
+            />
+
+            <Route 
+              path="/dashboard" 
+              element={<Dashboard 
                 editorJsData={editorJsData} 
                 setEditorJsData={setEditorJsData}
                 backEndUrl={backEndUrl}
@@ -56,7 +73,15 @@ function App() {
               />} 
             />
 
+            <Route
+              path="/:name"
+              element={<Subpage 
+                backEndUrl={backEndUrl}
+              />}
+            />
+            </Route>
           </Routes>
+
       </BrowserRouter>
     </>
   )

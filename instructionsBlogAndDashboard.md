@@ -2988,9 +2988,319 @@ router.delete('/:postId', postController.deletePost);
     </button>
 )
 ```
+# Layout
+### homepage with subpages as btns & subpage view
+#### frontend\src\App.jsx
+```jsx
+import Layout from "./layouts/Layout";
+import Homepage from './pages/Homepage'
+import Dashboard from './pages/Dashboard';
+import Posts from './pages/Posts'
+import Subpage from './pages/Subpage'
+  return (
+    <>
+      <BrowserRouter>
 
-- homepage with subpages as btns
-- subpage view
+        
+          <Routes>
+            {/* Parent route with Layout */}
+            <Route element={<Layout backEndUrl={backEndUrl} />}>
+
+            <Route 
+              path="/" 
+              element={<Homepage 
+                editorJsData={editorJsData} 
+                setEditorJsData={setEditorJsData}
+                backEndUrl={backEndUrl}
+              />}
+            />
+{/* ETC */}
+            <Route
+              path="/:name"
+              element={<Subpage 
+                backEndUrl={backEndUrl}
+              />}
+            />
+            </Route>
+          </Routes>
+
+      </BrowserRouter>
+    </>
+  )
+```
+
+#### frontend\src\layouts\Layout.jsx
+```jsx
+import { Outlet } from "react-router-dom";
+
+import HeaderHomepage from "../pages/homepageComponents/HeaderHomepage";
+import FooterHomepage from "../pages/homepageComponents/FooterHomepage";
+
+function Layout({ backEndUrl }) {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <HeaderHomepage backEndUrl={backEndUrl} />
+      <main className="flex-grow">
+        <Outlet />
+      </main>
+      <FooterHomepage />
+    </div>
+  );
+}
+
+export default Layout;
+```
+
+#### frontend\src\pages\Homepage.jsx
+```jsx
+import MainHomepage from "./homepageComponents/MainHomepage";
+
+function Homepage({ backEndUrl }) {
+
+  return (
+    <>
+      <div className="flex flex-col min-h-screen">
+        <MainHomepage backEndUrl={backEndUrl} />
+      </div>
+    </>
+  );
+}
+
+export default Homepage;
+```
+
+#### frontend\src\pages\homepageComponents\FooterHomepage.jsx
+```jsx
+import { useNavigate } from "react-router-dom";
+
+function FooterHomepage() {
+
+  const navigate = useNavigate();
+
+  // Navigation handler for Dashboard
+  const navigateToDashboard = () => {
+    navigate("/dashboard");
+  };
+
+  return (
+    <>
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white p-4 flex justify-center">
+        <button
+          onClick={navigateToDashboard}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Dashboard
+        </button>
+      </footer>
+    </>
+  );
+}
+
+export default FooterHomepage;
+```
+#### frontend\src\pages\homepageComponents\HeaderHomepage.jsx
+```jsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+
+function HeaderHomepage({ backEndUrl }) {
+  const [pages, setPages] = useState([]);
+  const [_selectedPage, setSelectedPage] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Fetch subpages from backend
+  useEffect(() => {
+    const getPages = async () => {
+      try {
+        const res = await axios.get(`${backEndUrl}/api/subPages`);
+        console.log('fetched subpages', res)
+        setPages(res.data);
+      } catch (error) {
+        console.error("Error fetching subpages:", error);
+      }
+    };
+    getPages();
+  }, [backEndUrl]);
+
+  return (
+    <div className="w-full">
+      {/* Header */}
+      <header className="flex items-center justify-between bg-gray-800 text-white p-4">
+        <h1 className="text-xl font-bold">My Blog</h1>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="text-2xl focus:outline-none"
+        >
+          ☰
+        </button>
+      </header>
+
+      {/* Sidebar (shows when menuOpen = true) */}
+      {menuOpen && (
+        <nav className="absolute top-16 left-0 bg-gray-700 text-white w-48 p-4 rounded shadow-lg">
+          <ul className="space-y-2">
+            {pages.length === 0 && <li>No subpages found</li>}
+            {pages.map((page) => (
+              <Link to={`/${page.name}`}>
+                <li
+                  key={page._id}
+                  className="cursor-pointer hover:bg-gray-600 p-2 rounded"
+                  onClick={() => {
+                    setSelectedPage(page._id);
+                    setMenuOpen(false);
+                  }}
+                >
+                  {page.name || "Untitled Page"}
+                </li> 
+              </Link>
+
+            ))}
+          </ul>
+        </nav>
+      )}
+    </div>
+  );
+}
+
+export default HeaderHomepage;
+```
+
+#### frontend\src\pages\homepageComponents\MainHomepage.jsx
+```jsx
+import Subpage from "../Subpage";
+
+const MainHomepage = ({ backEndUrl }) => {
+  return <Subpage backEndUrl={backEndUrl} forcedName="main" />;
+};
+
+export default MainHomepage;
+```
+
+#### frontend\src\pages\Subpage.jsx
+```jsx
+import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
+import { useParams  } from 'react-router-dom';
+import axios from 'axios';
+import RenderedEditorJsContent from "../components/RenderedEditorJsContent";
+
+const Subpage = ({ backEndUrl, forcedName }) => {
+  const [loading, setLoading] = useState(true)
+  const [posts, setPosts] = useState([])
+  const [pages, setPages] = useState([])
+
+  useEffect(() => {
+    const getpages = async () => {
+      const res = await axios.get(`${backEndUrl}/api/subPages`)
+      setPages(res.data)
+    }
+    getpages()
+  }, [backEndUrl])
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get(`${backEndUrl}/api/posts`);
+        setPosts(response.data); 
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+        setLoading(false); 
+      }
+    };
+    
+    fetchPosts();
+  }, [backEndUrl]);
+
+  const { name: paramName } = useParams();
+  const name = forcedName || paramName;
+  const currentPage = pages.find((page) => page.name === name)
+  const currentPageId = currentPage?._id
+  const filteredPosts = posts.filter(
+    (post) => post.subPage?._id === currentPageId
+  )
+
+  // αυτή η συνάρτηση κρατάει μόνο την πρώτη εικόνα και τις πρώτες 70 λέξεις. Σε μεγάλο βαθμό απο GPT
+  const getPreviewContent = (content, maxWords = 70) => {
+    const previewBlocks = [];
+    let wordCount = 0;
+    let imageIncluded = false;
+
+    for (const block of content.blocks) {
+      if (block.type === 'image' && !imageIncluded) {
+        previewBlocks.push(block);
+        imageIncluded = true;
+      }
+
+      if (block.type === 'header') {
+        previewBlocks.push(block);
+      }
+
+      if (block.type === 'paragraph') {
+        const words = block.data.text.split(/\s+/);
+        const remaining = maxWords - wordCount;
+
+        if (remaining <= 0) break;
+
+        const trimmedWords = words.slice(0, remaining);
+        previewBlocks.push({
+          ...block,
+          data: {
+            ...block.data,
+            text: trimmedWords.join(' ') + (words.length > remaining ? '...' : '')
+          }
+        });
+
+        wordCount += trimmedWords.length;
+      }
+
+      if (wordCount >= maxWords && imageIncluded) break;
+    }
+
+    return {
+      ...content,
+      blocks: previewBlocks
+    };
+  };
+
+  return (
+    <>
+      <div className="p-4 max-w-4xl mx-auto">
+        {loading && <p>Loading...</p>}
+        {!loading && posts.length === 0 && <p>No posts found</p>}
+
+        <div className="grid gap-6">
+            {!loading && posts.length !== 0 &&
+              filteredPosts.map((post) => (
+                <Link to={`/posts/${post._id}`}>
+                  <div 
+                    key={post._id}
+                    className="bg-slate-100 text-black shadow-md rounded-2xl p-6 border border-gray-300 hover:shadow-lg transition-shadow"
+                  >
+                      <RenderedEditorJsContent
+                        editorJsData={getPreviewContent(post.content)}
+                        subPageName={post.subPage?.name}
+                      />
+
+                    <p className="text-sm text-gray-500 mt-4">
+                      {new Date(post.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </Link>
+              ))
+            }        
+        </div>    
+      </div>
+    </>
+  )
+}
+export default Subpage
+```
+
+
+
 - protected page admin login
 
  
