@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react"
-import { useNavigate  } from 'react-router-dom';
 import { Link } from "react-router-dom"
+import { useParams  } from 'react-router-dom';
 import axios from 'axios';
 import RenderedEditorJsContent from "../components/RenderedEditorJsContent";
 
-const Posts = ({ backEndUrl }) => {
+const Subpage = ({ backEndUrl, forcedName }) => {
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState([])
+  const [pages, setPages] = useState([])
+
+  useEffect(() => {
+    const getpages = async () => {
+      const res = await axios.get(`${backEndUrl}/api/subPages`)
+      setPages(res.data)
+    }
+    getpages()
+  }, [backEndUrl])
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -22,6 +31,14 @@ const Posts = ({ backEndUrl }) => {
     
     fetchPosts();
   }, [backEndUrl]);
+
+  const { name: paramName } = useParams();
+  const name = forcedName || paramName;
+  const currentPage = pages.find((page) => page.name === name)
+  const currentPageId = currentPage?._id
+  const filteredPosts = posts.filter(
+    (post) => post.subPage?._id === currentPageId
+  )
 
   // αυτή η συνάρτηση κρατάει μόνο την πρώτη εικόνα και τις πρώτες 70 λέξεις. Σε μεγάλο βαθμό απο GPT
   const getPreviewContent = (content, maxWords = 70) => {
@@ -66,27 +83,15 @@ const Posts = ({ backEndUrl }) => {
     };
   };
 
-  const navigate = useNavigate();
-
-  const navigateToDashboard = () => {
-    navigate('/dashboard');
-  }
-
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4 text-center">All Posts</h1>
       <div className="p-4 max-w-4xl mx-auto">
-        <button
-          onClick={navigateToDashboard}
-          className='bg-blue-500 text-white px-4 py-2 rounded'
-        >Dashboard</button>
-
         {loading && <p>Loading...</p>}
         {!loading && posts.length === 0 && <p>No posts found</p>}
 
         <div className="grid gap-6">
             {!loading && posts.length !== 0 &&
-              posts.map((post) => (
+              filteredPosts.map((post) => (
                 <Link to={`/posts/${post._id}`}>
                   <div 
                     key={post._id}
@@ -103,10 +108,10 @@ const Posts = ({ backEndUrl }) => {
                   </div>
                 </Link>
               ))
-            }
+            }        
         </div>    
       </div>
     </>
   )
 }
-export default Posts
+export default Subpage

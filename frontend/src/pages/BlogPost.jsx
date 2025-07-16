@@ -27,8 +27,8 @@ const BlogPost = ({ backEndUrl }) => {
     }
   }, [backEndUrl, id]);
 
-  const navigateToHome = () => {
-    navigate('/');
+  const navigateToDashboard = () => {
+    navigate('/dashboard');
   }
 
   const editPost = () => {
@@ -50,7 +50,6 @@ const BlogPost = ({ backEndUrl }) => {
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4 text-center">All Posts</h1>
       <div className="p-4 max-w-4xl mx-auto">
         {loading && <p>Loading...</p>}
         {!loading && !post && <p>Blog post was not found</p>}
@@ -68,10 +67,10 @@ const BlogPost = ({ backEndUrl }) => {
                   </p>
                   <div className='btnDiv flex gap-3 mx-3 justify-center'>
                     <button 
-                      onClick={navigateToHome}
+                      onClick={navigateToDashboard}
                       className='bg-blue-500 text-white px-4 py-2 rounded'
                     >
-                      Home
+                      Dashboard
                     </button>
                     <button 
                       onClick={editPost}
