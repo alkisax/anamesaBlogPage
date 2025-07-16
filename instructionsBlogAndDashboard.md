@@ -3299,9 +3299,275 @@ const Subpage = ({ backEndUrl, forcedName }) => {
 export default Subpage
 ```
 
+# create pinned posts
+## back
+#### backend\models\post.model.js
+```js
+  pinned: {
+    type: Boolean,
+    default: false
+  }
+```
+#### backend\daos\post.dao.js
+```js
+const createPost = (content, subPage, pinned) => {
+  return Post.create({ content, subPage, pinned });
+};
 
+const editPost = async (postId, content, subPage, pinned) => {
+  const post = await Post.findById(postId);
+  if (!post) {
+    throw new Error('post not found');
+  }
+  post.content = content;
+
+  if (subPage !== undefined) {
+    post.subPage = subPage;
+  }
+
+    if (pinned !== undefined) {
+    post.pinned = pinned;
+  }
+  
+  return await post.save();
+};
+```
+
+#### backend\controllers\post.controller.js
+```js
+const createPost = async (req, res) => {
+  try {
+    const { content, subPage, pinned } = req.body;
+
+    if (!content || !content.blocks) {
+      return res.status(400).json({ error: 'Invalid EditorJS content' });
+    }
+
+    const savedPost = await postDao.createPost(content, subPage, pinned);
+
+    res.status(200).json(savedPost);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error while saving post' });
+  }
+};
+
+const editPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { content, subPage, pinned } = req.body;
+
+    if (!content || !content.blocks) {
+      return res.status(400).json({ error: 'Invalid EditorJS content for edit post' });
+    }
+
+    const savedPost = await postDao.editPost(postId, content, subPage, pinned);
+
+    res.status(200).json(savedPost);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error while editing post' });
+  }
+};
+```
+
+## front
+A. Add pinned checkbox in EditorJs
+In your EditorJs component:
+
+Add a state for pinned:
+```js
+const [isPinned, setIsPinned] = useState(false);
+Render checkbox near page select:
+```
+```jsx
+<div className="flex items-center gap-2 mt-4">
+  <input
+    type="checkbox"
+    id="pinned"
+    checked={isPinned}
+    onChange={(e) => setIsPinned(e.target.checked)}
+    className="w-4 h-4"
+  />
+  <label htmlFor="pinned" className="text-gray-700">Pinned Post</label>
+</div>
+```
+Include pinned in POST/PUT request inside handleSubmit:
+
+```js
+if (isEditMode && id) {
+  await axios.put(`${backEndUrl}/api/posts/${id}`, {
+    content: outputData,
+    subPage: selectedPage,
+    pinned: isPinned
+  });
+} else {
+  await axios.post(`${backEndUrl}/api/posts`, {
+    content: outputData,
+    subPage: selectedPage,
+    pinned: isPinned
+  });
+}
+```
+When editing an existing post, set pinned state:
+In your useEffect that fetches post:
+```js
+setIsPinned(response.data.pinned || false);
+```
+
+ B. Render pinned posts first in Subpage
+Instead of doing two maps manually, the cleanest way is sorting in frontend:
+Replace:
+```js
+filteredPosts.map((post) => ())
+```
+With:
+```js
+[...filteredPosts]
+  .sort((a, b) => b.pinned - a.pinned) // pinned first
+  .map((post) => ())
+```
+
+# pagination
+```bash
+npm install react-paginate
+```
+#### frontend\src\hooks\usePagination.js
+```js
+// src/hooks/usePagination.js
+import { useState, useMemo } from "react";
+
+export const usePagination = (items = [], itemsPerPage = 10) => {
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const pageCount = useMemo(() => Math.ceil(items.length / itemsPerPage), [items, itemsPerPage]);
+
+  const currentItems = useMemo(() => {
+    const offset = currentPage * itemsPerPage;
+    return items.slice(offset, offset + itemsPerPage);
+  }, [items, currentPage, itemsPerPage]);
+
+  const goToPage = (pageIndex) => {
+    if (pageIndex >= 0 && pageIndex < pageCount) {
+      setCurrentPage(pageIndex);
+    }
+  };
+
+  const handlePageClick = (data) => {
+    setCurrentPage(data.selected);
+  };
+
+  return {
+    currentPage,
+    pageCount,
+    currentItems,
+    goToPage,
+    handlePageClick,
+  };
+};
+```
+
+#### frontend\src\components\Pagination.jsx
+```jsx
+import ReactPaginate from "react-paginate";
+
+const Pagination = ({ loading, posts, goToPage, currentPage, pageCount, handlePageClick}) => {
+  
+  return(
+    <>
+        {/* ✅ Pagination Component */}
+        {!loading && posts.length > 10 && (
+          <div className="mt-6 flex justify-center items-center gap-2">
+            {/* First Button */}
+            <button
+              onClick={() => goToPage(0)}
+              disabled={currentPage === 0}
+              className={`px-3 py-1 border rounded ${
+                currentPage === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
+            >
+              First
+            </button>
+
+            <ReactPaginate
+              previousLabel={"← Previous"}
+              nextLabel={"Next →"}
+              breakLabel={"..."}
+              pageCount={pageCount}
+              marginPagesDisplayed={2}
+              pageRangeDisplayed={3}
+              onPageChange={handlePageClick}
+              forcePage={currentPage} // ✅ Sync with state
+              containerClassName={"flex gap-2"}
+              pageClassName={"px-3 py-1 border rounded cursor-pointer"}
+              activeClassName={"bg-blue-500 text-white"}
+              previousClassName={"px-3 py-1 border rounded cursor-pointer"}
+              nextClassName={"px-3 py-1 border rounded cursor-pointer"}
+              breakClassName={"px-3 py-1 border rounded"}
+            />
+
+            {/* Last Button */}
+            <button
+              onClick={() => goToPage(pageCount - 1)}
+              disabled={currentPage === pageCount - 1}
+              className={`px-3 py-1 border rounded ${
+                currentPage === pageCount - 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
+            >
+              Last
+            </button>
+          </div>
+        )}
+    </>
+  )
+}
+export default Pagination
+```
+
+#### frontend\src\pages\Posts.jsx
+```jsx
+import { getPreviewContent } from "../utils/editorHelper";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
+  const { currentItems: currentPosts, pageCount, currentPage, handlePageClick, goToPage } =
+  usePagination(posts, 10);
+
+  return (
+    <>
+      <h1 className="text-2xl font-bold mb-4 text-center">All Posts</h1>
+      <div className="p-4 max-w-4xl mx-auto">
+        {loading && <p>Loading...</p>}
+        {!loading && posts.length === 0 && <p>No posts found</p>}
+
+        <div className="grid gap-6">
+            {!loading && posts.length !== 0 &&
+              currentPosts.map((post) => (
+                <Link to={`/posts/${post._id}`}>
+                  <div >
+                    // etc
+                  </div>
+                </Link>
+              ))
+            }
+        </div>
+
+        <Pagination 
+          loading={loading}
+          posts={posts}
+          goToPage={goToPage}
+          currentPage={currentPage}
+          pageCount={pageCount}
+          handlePageClick={handlePageClick}
+        />
+  )
+```
+- ομοίως και με  
+frontend\src\pages\UploadedFiles.jsx   
+frontend\src\pages\Subpage.jsx  
 
 - protected page admin login
+- apearance
+- deploy 
 
  
 

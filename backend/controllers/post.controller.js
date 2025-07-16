@@ -3,13 +3,13 @@ const postDao = require('../daos/post.dao');
 
 const createPost = async (req, res) => {
   try {
-    const { content, subPage } = req.body;
+    const { content, subPage, pinned } = req.body;
 
     if (!content || !content.blocks) {
       return res.status(400).json({ error: 'Invalid EditorJS content' });
     }
 
-    const savedPost = await postDao.createPost(content, subPage);
+    const savedPost = await postDao.createPost(content, subPage, pinned);
 
     res.status(200).json(savedPost);
   } catch (err) {
@@ -21,13 +21,13 @@ const createPost = async (req, res) => {
 const editPost = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { content, subPage } = req.body;
+    const { content, subPage, pinned } = req.body;
 
     if (!content || !content.blocks) {
       return res.status(400).json({ error: 'Invalid EditorJS content for edit post' });
     }
 
-    const savedPost = await postDao.editPost(postId, content, subPage);
+    const savedPost = await postDao.editPost(postId, content, subPage, pinned);
 
     res.status(200).json(savedPost);
   } catch (err) {

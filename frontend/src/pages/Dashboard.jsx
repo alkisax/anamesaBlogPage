@@ -7,6 +7,9 @@ function Dashboard({ editorJsData, setEditorJsData, backEndUrl }) {
   const navigateToPosts = () => {
     navigate("/posts")
   }
+  const navigateToUploads = () => {
+    navigate("/uploads")
+  }
 
   return (
     <>
@@ -24,7 +27,12 @@ function Dashboard({ editorJsData, setEditorJsData, backEndUrl }) {
         setEditorJsData={setEditorJsData}
         backEndUrl={backEndUrl}
       />
+      <br />
       <p>!Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi minus illum nisi est? At quisquam id nulla molestias delectus, rerum quas provident illo corrupti dolor minus, sint vero obcaecati incidunt?</p>
+      <br />
+      <button onClick={navigateToUploads}>
+        Uploaded Files
+      </button>
     </>
   );
 }

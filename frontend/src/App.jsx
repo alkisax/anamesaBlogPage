@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import {BrowserRouter, Routes, Route} from "react-router-dom";
 import Layout from "./layouts/Layout";
-import Homepage from './pages/Homepage'
+import Homepage from './pages/HomePage'
 import Dashboard from './pages/Dashboard';
 import Posts from './pages/Posts'
 import Subpage from './pages/Subpage'

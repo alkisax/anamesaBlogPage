@@ -14,6 +14,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
   const [pages, setPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState('');
   const [newPage, setNewPage] = useState('');
+  const [isPinned, setIsPinned] = useState(false);
   // const [originalImageUrls, setOriginalImageUrls] = useState([]);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
           await editor.isReady;
           editor.render(savedData);
           setSelectedPage(savedSubPage);
+          setIsPinned(response.data.pinned || false);
 
           // store original image URLs
           // const initialImageUrls = savedData.blocks
@@ -100,13 +102,15 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
         if (isEditMode && id) {
           await axios.put(`${backEndUrl}/api/posts/${id}`, {
             content: outputData,
-            subPage: selectedPage
+            subPage: selectedPage,
+            pinned: isPinned
           })
           console.log("✅ Post updated");
         } else {
           await axios.post(`${backEndUrl}/api/posts`, {
             content: outputData,
-            subPage: selectedPage
+            subPage: selectedPage,
+            pinned: isPinned
           })
           console.log("✅ Post created");
         }
@@ -199,6 +203,17 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
                 </button>
               </div>
             )}
+          </div>
+
+          <div className="flex items-center gap-2 mt-4">
+            <input
+              type="checkbox"
+              id="pinned"
+              checked={isPinned}
+              onChange={(e) => setIsPinned(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <label htmlFor="pinned" className="text-gray-700">Pinned Post</label>
           </div>
           
 
