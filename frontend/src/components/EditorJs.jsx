@@ -84,7 +84,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
 
   const handlePreview = async () => {
     const outputData = await editorRef.current.save()
-    localStorage.setItem('editorData', JSON.stringify(outputData));
+    // localStorage.setItem('editorData', JSON.stringify(outputData));
     setEditorJsData(outputData);
   }
 
@@ -93,7 +93,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
       try {
         //  η save() ερχεται απο τον editorjs και επιστρέφει μια υπόσχεση με τα δεδομένα του editor
         const outputData = await editorRef.current.save()
-        localStorage.setItem('editorData', JSON.stringify(outputData));
+        // localStorage.setItem('editorData', JSON.stringify(outputData));
         setEditorJsData(outputData);
         console.log('Data saved:', outputData);
 
@@ -154,6 +154,10 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
   }
 
   const selectedPageName = pages.find(p => p._id === selectedPage)?.name || ''
+
+  useEffect(() => {
+    setEditorJsData(null);
+  }, []);
 
   return (
     <>
