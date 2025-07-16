@@ -2832,10 +2832,163 @@ const UploadedFiles = ({ backEndUrl }) => {
 
 export default UploadedFiles
 ```
+# delete post / delete file
+### upload delete
+#### backend\daos\upload.dao.js
+```js
+const deleteUpload = (uploadId) => {
+  return Upload.findByIdAndDelete(uploadId);
+};
+```
+#### backend\controllers\upload.controller.js
+```js
+const deleteUpload = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const upload = await uploadDao.deleteUpload(id);
+    if (!upload) {
+      return res.status(404).json({ message: 'File not found' });
+    }
 
+    // Remove the file from disk (uploads folder)
+    const filePath = path.join(__dirname, '..', 'uploads', upload.file.filename);
+    await fs.unlink(filePath).catch(() => console.warn('File already deleted or missing'));
 
-- delete post
+    res.status(200).json({ message: 'File deleted successfully' });
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ error: 'Failed to delete file' });
+  }
+};
+```
+#### backend\routes\upload.routes.js
+```js
+/**
+ * @swagger
+ * /api/uploads/{id}:
+ *   delete:
+ *     summary: Delete an uploaded file by ID
+ *     tags: [Uploads]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The upload ID
+ *     responses:
+ *       200:
+ *         description: File deleted successfully
+ *       404:
+ *         description: File not found
+ *       500:
+ *         description: Failed to delete file
+ */
+router.delete('/:id', uploadController.deleteUpload);
+```
+#### frontend\src\pages\UploadedFiles.jsx
+```jsx
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
+
+    try {
+      await axios.delete(`${backEndUrl}/api/uploads/${id}`);
+      setFiles((prev) => prev.filter((file) => file._id !== id));
+    } catch (err) {
+      console.error("Error deleting file", err);
+      alert("Failed to delete file.");
+    }
+  };
+
+return (
+  <td className="border border-gray-300 px-4 py-2 text-center">
+    <button
+      onClick={() => handleDelete(file._id)}
+      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+    >
+      Delete
+    </button>
+  </td>
+)
+```
+
+### post delete
+#### backend\daos\post.dao.js
+```js
+const deletePost = (postId) => {
+  return Post.findByIdAndDelete(postId);
+};
+```
+#### backend\controllers\post.controller.js
+```js
+const deletePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const deletedPost = await postDao.deletePost(postId);
+
+    if (!deletedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.status(200).json({ message: 'Post deleted successfully', deletedPost });
+  } catch (err) {
+    console.error('Delete Post Error:', err);
+    res.status(500).json({ error: 'Server error while deleting post' });
+  }
+};
+```
+#### backend\routes\post.routes.js
+```js
+/**
+ * @swagger
+ * /api/posts/{postId}:
+ *   delete:
+ *     summary: Delete a post by ID
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the post to delete
+ *     responses:
+ *       200:
+ *         description: Post deleted successfully
+ *       404:
+ *         description: Post not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:postId', postController.deletePost);
+```
+
+#### frontend\src\pages\BlogPost.jsx
+```jsx
+  const deletePost = async () => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      try {
+        await axios.delete(`${backEndUrl}/api/posts/${id}`);
+        alert("Post deleted successfully.");
+        navigate('/');
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        alert("Failed to delete the post.");
+      }
+    }
+  };
+
+  return (
+    <button
+      onClick={deletePost}
+      className="bg-red-500 text-white px-4 py-2 rounded"
+    >
+      Delete
+    </button>
+)
+```
+
 - homepage with subpages as btns
 - subpage view
 - protected page admin login

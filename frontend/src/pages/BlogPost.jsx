@@ -35,6 +35,19 @@ const BlogPost = ({ backEndUrl }) => {
     navigate(`/edit/${id}`);
   }
 
+  const deletePost = async () => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      try {
+        await axios.delete(`${backEndUrl}/api/posts/${id}`);
+        alert("Post deleted successfully.");
+        navigate('/');
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        alert("Failed to delete the post.");
+      }
+    }
+  };
+
   return (
     <>
       <h1 className="text-2xl font-bold mb-4 text-center">All Posts</h1>
@@ -65,6 +78,12 @@ const BlogPost = ({ backEndUrl }) => {
                       className='bg-blue-500 text-white px-4 py-2 rounded'
                     >
                       Edit
+                    </button>
+                    <button
+                      onClick={deletePost}
+                      className="bg-red-500 text-white px-4 py-2 rounded"
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>

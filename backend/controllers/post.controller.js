@@ -59,9 +59,26 @@ const getPostById = async (req, res) => {
   }
 };
 
+const deletePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const deletedPost = await postDao.deletePost(postId);
+
+    if (!deletedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.status(200).json({ message: 'Post deleted successfully', deletedPost });
+  } catch (err) {
+    console.error('Delete Post Error:', err);
+    res.status(500).json({ error: 'Server error while deleting post' });
+  }
+};
+
 module.exports = {
   createPost,
   editPost,
   getPostById,
   getAllPosts,
+  deletePost,
 };

@@ -7,7 +7,12 @@ const createUpload = (imageData) => {
   return Upload.create(imageData)
 };
 
+const deleteUpload = (uploadId) => {
+  return Upload.findByIdAndDelete(uploadId);
+};
+
 module.exports = {
   getAllUploads,
-  createUpload
+  createUpload,
+  deleteUpload
 };
