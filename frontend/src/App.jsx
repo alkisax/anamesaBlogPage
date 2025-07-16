@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import './App.css'
 import {BrowserRouter, Routes, Route} from "react-router-dom";
-import HomePage from './pages/HomePage';
+import Homepage from './pages/Homepage'
+import Dashboard from './pages/Dashboard';
 import Posts from './pages/Posts'
 import BlogPost from './pages/BlogPost';
 import EditBlogPost from './pages/EditBlogPost';
@@ -18,7 +19,16 @@ function App() {
           <Routes>
             <Route 
               path="/" 
-              element={<HomePage 
+              element={<Homepage 
+                editorJsData={editorJsData} 
+                setEditorJsData={setEditorJsData}
+                backEndUrl={backEndUrl}
+              />}
+            />
+
+            <Route 
+              path="/dashboard" 
+              element={<Dashboard 
                 editorJsData={editorJsData} 
                 setEditorJsData={setEditorJsData}
                 backEndUrl={backEndUrl}
