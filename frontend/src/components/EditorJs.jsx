@@ -157,7 +157,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
 
   useEffect(() => {
     setEditorJsData(null);
-  }, []);
+  }, [setEditorJsData]);
 
   return (
     <>
