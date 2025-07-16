@@ -9,6 +9,7 @@ const UploadedFiles = ({ backEndUrl }) => {
     const getUploads = async () => {
       try {
         const res = await axios.get (`${backEndUrl}/api/uploads`)
+        console.log(res)
         setFiles(res.data)
       } catch (err) {
         console.error('Error fetching uploads', err);
@@ -40,7 +41,7 @@ const UploadedFiles = ({ backEndUrl }) => {
                 rel="noopener noreferrer"
                 className="text-blue-500 underline"
               >
-                {file.name} ({file.file?.contentType})
+                {file.name || file.file?.originalName || 'Untitled'} ({file.file?.contentType})
               </a>
             </li>
           ))}

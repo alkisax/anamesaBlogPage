@@ -7,6 +7,7 @@ const uploadDao = require('../daos/upload.dao');
 const renderUploadPage = async (req, res) => {
   try {
     const items = await uploadDao.getAllUploads();
+    console.log("Mongo items count:", items.length);
     res.json(items);
   } catch (err) {
     console.error(err);
@@ -40,7 +41,9 @@ const uploadFile = async (req, res) => {
         data,
         contentType: req.file.mimetype,
         originalName: req.file.originalname,
-        filename: req.file.filename 
+        filename: req.file.filename,
+        size: req.file.size,
+        extension: path.extname(req.file.originalname).slice(1)        
       }
     };
     console.log('Upload object:', obj);
@@ -54,7 +57,10 @@ const uploadFile = async (req, res) => {
       file: {
         url: `http://localhost:3001/uploads/${req.file.filename}`,
         name: saved.name,
-        type: saved.file.contentType
+        size: saved.file.size,
+        type: saved.file.contentType,
+        extension: saved.file.extension,
+        filename: saved.file.filename
       },
     });
     // res.status(200).json({ message: 'image uploaded' });
