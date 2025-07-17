@@ -13,7 +13,7 @@ const ProtectedRoute = ({ admin , children, requiredRole }) => {
 
   if (requiredRole && !admin?.roles?.includes(requiredRole)) {
     console.log("protected passed"); 
-    return <Navigate to="/admin" />;
+    return <Navigate to="/dashboard" />;
   }
 
   return children;
