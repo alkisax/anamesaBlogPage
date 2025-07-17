@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+// import useAuth from "../../hooks/useAuth";
 
-function HeaderHomepage({ backEndUrl }) {
+const HeaderHomepage = ({ backEndUrl, admin, handleLogout }) => {
   const [pages, setPages] = useState([]);
   const [_selectedPage, setSelectedPage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const navigate = useNavigate();
+
+  // const { handleLogout } = useAuth(backEndUrl);
+  // const { admin, handleLogout } = useAuth(backEndUrl);
+  // const isAdmin = admin?.roles?.includes("admin");
+  if (admin !== null) console.log("Header: is admin?", admin)
+  else console.log("Header: is admin? no")
 
   // Fetch subpages from backend
   useEffect(() => {
@@ -25,17 +35,24 @@ function HeaderHomepage({ backEndUrl }) {
     <div className="w-full">
       {/* Header */}
       <>
-        <Link to={`/`}>
-            <header className="flex items-center justify-between bg-gray-800 text-white p-4">
-            <h1 className="text-xl font-bold">My Blog</h1>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-2xl focus:outline-none"
-            >
-              ☰
-            </button>
-          </header>
-        </Link>      
+          <header 
+            className="flex items-center justify-between bg-gray-800 text-white p-4"
+            onClick={() => {
+              // Navigate to homepage
+              navigate("/")
+            }}
+          >
+          <h1 className="text-xl font-bold">My Blog</h1>
+          <button
+            onClick={(e) => {
+              e.stopPropagation() // Prevent header click from firing
+              setMenuOpen(!menuOpen)
+            }}
+            className="text-2xl focus:outline-none"
+          >
+            ☰
+          </button>
+        </header>
       </>
 
 
@@ -45,9 +62,8 @@ function HeaderHomepage({ backEndUrl }) {
           <ul className="space-y-2">
             {pages.length === 0 && <li>No subpages found</li>}
             {pages.map((page) => (
-              <Link to={`/${page.name}`}>
+              <Link to={`/${page.name}`} key={page._id}>
                 <li
-                  key={page._id}
                   className="cursor-pointer hover:bg-gray-600 p-2 rounded"
                   onClick={() => {
                     setSelectedPage(page._id);
@@ -57,8 +73,18 @@ function HeaderHomepage({ backEndUrl }) {
                   {page.name || "Untitled Page"}
                 </li> 
               </Link>
-
             ))}
+            {admin && (
+              <li
+                className="cursor-pointer hover:bg-gray-600 p-2 rounded"
+                onClick={() => {
+                  handleLogout()
+                  setMenuOpen(false);
+                }}
+              >
+                logout
+              </li>
+            )}
           </ul>
         </nav>
       )}

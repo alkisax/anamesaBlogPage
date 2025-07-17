@@ -3565,6 +3565,1533 @@ import Pagination from "../components/Pagination";
 frontend\src\pages\UploadedFiles.jsx   
 frontend\src\pages\Subpage.jsx  
 
+# Login admin
+**όλη την λογική την πείρα απο το tarot revised απο οπου και αντιγράφω και τις οδηγίες**
+# Δημιουργια admin
+## Back
+#### admin.models.js
+έχει
+- username - required
+- name
+- roles
+- email
+- hashedPassword - required
+
+```js
+const mongoose = require("mongoose")
+const Schema = mongoose.Schema
+const adminSchema = new Schema({
+  username:{
+    type: String,
+    required: [true, 'username is required'],
+    unique:true
+  },
+  name:{
+    type: String,
+    required: false
+  },
+  roles:{
+    type: [String],
+    default: ['user']
+  },
+  email:{
+    type: String,
+    required: false,
+    unique: true
+  },
+// προσοχή αποθηκεύω hased password και όχι password
+  hashedPassword:{
+    type: String,
+    required: [true, 'password is required'],
+  },
+},
+{
+  collection: 'admins',
+  timestamps: true
+})
+module.exports = mongoose.model('Admin', adminSchema)
+```
+#### admin.dao.js
+```js
+const Admin = require('../models/admins.models');
+
+const findAllAdmins = async () => {
+  return await Admin.find();
+};
+
+const findAdminByUsername = async (username) => {
+  return await Admin.findOne({ username });
+};
+
+const findAdminByEmail = async (email) => {
+  return await Admin.findOne({ email });
+};
+
+const createAdmin = async (adminData) => {
+  const admin = new Admin(adminData);
+  return await admin.save();
+};
+
+const deleteAdminById = async (adminId) => {
+  return await Admin.findByIdAndDelete(adminId)
+}
+
+module.exports = {
+  findAllAdmins,
+  findAdminByUsername,
+  findAdminByEmail,
+  createAdmin,
+  deleteAdminById
+};
+```
+#### admin.controller.js
+```js
+const bcrypt = require('bcrypt') // για να φτιάξω το hashed pass
+const logger = require('../utils/logger')
+const Admin = require('../models/admins.models')
+const adminDAO = require('../daos/admin.dao')
+
+exports.findAll = async (req,res) => {
+  try {
+
+    // add later when auth
+    // if (!req.headers.authorization) {
+    // logger.warn('Unauthorized access attempt to /admins (no token)');
+    //   return res.status(401).json({ status: false, error: 'No token provided' });
+    // }
+
+    const admins = await adminDAO.findAllAdmins();
+    logger.info('Fetched all admins');
+    res.status(200).json({ status: true, data: admins });
+  } catch (error) {
+    logger.error(`Error fetching admins: ${error.message}`);
+    res.status(500).json({ status: false, error: 'Internal server error' });
+  }
+}
+
+exports.create = async (req,res) => {
+  let data = req.body
+
+  const username = data.username
+  const name = data.name
+  const password = data.password
+  const email = data.email
+  const roles = data.roles
+
+  const SaltOrRounds = 10
+  const hashedPassword = await bcrypt.hash(password, SaltOrRounds)
+
+  try {
+    const newAdmin = await adminDAO.createAdmin({
+      username,
+      name,
+      email,
+      roles,
+      hashedPassword
+    });
+
+    logger.info(`Created new admin: ${username}`);
+    res.status(201).json(newAdmin)
+  } catch(error) {
+    logger.error(`Error creating admin: ${error.message}`);
+    res.status(400).json({error: error.message})
+  }
+}
+
+exports.deleteById = async (req, res) => {
+  const adminId = req.params.id
+  if (!adminId){
+    return res.status(400).json({
+      status: false,
+      error: 'Admin ID is required OR not found'
+    })
+  }
+  
+  try {
+    const deleteAdmin = await adminDAO.deleteAdminById(adminId) 
+
+    if (!deleteAdmin){
+      logger.warn('Delete admin called without ID');
+      return res.status(404).json({
+        status: false,
+        error: 'Error deleting admin: not found'
+      })
+    } else {
+      logger.info(`Admin ${deleteAdmin.username} deleted successfully`);
+      res.status(200).json({
+        status: true,
+        message: `Admin ${deleteAdmin.username} deleted successfully`,
+      })
+    }
+  } catch (error) {
+    logger.error(`Error deleting admin: ${error.message}`);
+    res.status(500).json({
+      status: false,
+      error: error.message
+    })
+  }
+}
+```
+#### admin.routes.js
+```js
+const express = require('express')
+const router = express.Router()
+const adminController = require('../controllers/admin.controller')
+const { verifyToken, checkRole } = require('../middlewares/verification.middleware');
+
+
+router.get ('/', adminController.findAll)
+router.delete('/:id', adminController.deleteById)
+router.post('/', adminController.create) // αυτό είναι βασικό και απο εδώ μπορώ να δημιουργισω έναν αντμιν χωρις να μου ζητάει κάποιο authentication
+// αυτά θα αλλάξουν αργότερα που θα αποκτήσω και auth
+// router.delete('/:id', verifyToken, checkRole('admin'), adminController.deleteById)
+// router.get ('/', verifyToken, checkRole('admin'), adminController.findAll)
+
+module.exports = router
+```
+#### swagger για admin routes
+```js
+/**
+ * @swagger
+ * /api/admin:
+ *   get:
+ *     summary: Get all admins
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of admins
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Admin'
+ *       401:
+ *         description: Unauthorized - No token provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: No token provided
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.get ('/', verifyToken, checkRole('admin'), adminController.findAll)
+// router.get ('/', adminController.findAll)
+
+/**
+ * @swagger
+ * /api/admin:
+ *   post:
+ *     summary: Create a new admin
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, name, password, email, roles]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: admin123
+ *               name:
+ *                 type: string
+ *                 example: Admin User
+ *               password:
+ *                 type: string
+ *                 example: MySecurePassword1!
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: admin@example.com
+ *               roles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["admin"]
+ *     responses:
+ *       201:
+ *         description: Admin created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Admin'
+ *       400:
+ *         description: Bad request - Invalid or missing input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Username already exists
+ */
+router.post('/', adminController.create)
+
+/**
+ * @swagger
+ * /api/admin/{id}:
+ *   delete:
+ *     summary: Delete admin by ID
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the admin to delete
+ *     responses:
+ *       200:
+ *         description: Admin deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Admin admin123 deleted successfully
+ *       400:
+ *         description: Missing or invalid ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Admin ID is required OR not found
+ *       404:
+ *         description: Admin not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Error deleting admin: not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.delete('/:id', verifyToken, checkRole('admin'), adminController.deleteById)
+```
+
+#### app.js
+```js
+const adminRoutes = require('./routes/admin.routes')
+
+app.use('/api/admin', adminRoutes)
+```
+## jest testing for admin
+#### package.json
+**το script στο test είναι συμαντικο γιατί αλλιώς δεν τρέχουν δυο μαζί test αρχεία**
+```json
+  "scripts": {
+    "test": "cross-env NODE_ENV=test jest --coverage --testTimeout=50000 --runInBand",
+    "dev": "node --watch server.js"
+  },
+```
+#### __test__/admin.test.js
+```js
+const mongoose = require("mongoose");
+const request = require("supertest");
+const bcrypt = require("bcrypt");
+const app = require("../app");
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const Admin = require("../models/admins.models");
+const adminDAO = require("../daos/admin.dao");
+
+// Add this mock at the top of your test file to ensure it doesn't interact with the actual Stripe service during tests.
+jest.mock('stripe', () => {
+  return jest.fn().mockImplementation(() => ({
+    // Mock the methods you need, e.g., charge, paymentIntents, etc.
+    charges: {
+      create: jest.fn().mockResolvedValue({ success: true })
+    }
+  }));
+});
+
+const TEST_ADMIN = {
+  username: "adminuser",
+  name: "Admin User",
+  email: "adminuser@example.com",
+  password: "adminpassword",
+  roles: ["admin"]
+};
+
+let adminToken;
+let adminId;
+
+beforeAll(async () => {
+  const saltrounds = 10;
+  const hashedPassword = await bcrypt.hash(TEST_ADMIN.password, saltrounds);
+
+  await mongoose.connect(process.env.MONGODB_TEST_URI);
+  console.log("Connected to MongoDB for testing");
+
+  await Admin.deleteMany({});
+
+  const newAdmin = await Admin.create({
+    username: TEST_ADMIN.username,
+    name: TEST_ADMIN.name,
+    email: TEST_ADMIN.email,
+    hashedPassword,
+    roles: TEST_ADMIN.roles
+  });
+
+  // Simulate admin login to get token
+  const res = await request(app)
+    .post("/api/login")
+    .send({
+      username: TEST_ADMIN.username,
+      password: TEST_ADMIN.password
+    });
+  
+  adminToken = res.body.data.token;
+  adminId = newAdmin._id;
+  console.log("Admin token:", adminToken);
+});
+
+afterAll(async () => {
+  await Admin.deleteMany({});
+  await mongoose.connection.close();
+});
+
+describe('GET /api/admins', () => {
+  it('should return 200 and list of admins when authorized and admin role', async () => {
+    const res = await request(app)
+      .get('/api/admin')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+  });
+
+  it('should return 401 when no token is provided', async () => {
+    const res = await request(app)
+      .get('/api/admin');
+
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe(false);
+  });
+
+  it('should return 403 for non-admin role', async () => {
+    const nonAdminToken = 'some-fake-token-for-non-admin';
+    const res = await request(app)
+      .get('/api/admin')
+      .set('Authorization', `Bearer ${nonAdminToken}`);
+
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe(false);
+  });
+});
+
+describe('POST /api/admins', () => {
+  it('should create a new admin and return 201', async () => {
+    const newAdmin = {
+      username: 'newadmin',
+      name: 'New Admin',
+      email: 'newadmin@example.com',
+      password: 'newadminpassword',
+      roles: ['admin']
+    };
+
+    const res = await request(app)
+      .post('/api/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(newAdmin);
+
+    expect(res.status).toBe(201);
+    expect(res.body.username).toBe(newAdmin.username);
+    expect(res.body.name).toBe(newAdmin.name);
+    expect(res.body.email).toBe(newAdmin.email);
+    expect(res.body.roles).toEqual(newAdmin.roles);
+  });
+
+  it('should return 500 when fields are missing', async () => {
+    const newAdmin = {
+      username: 'newadmin'
+      // Missing required fields like name, password, etc.
+    };
+
+    const res = await request(app)
+      .post('/api/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(newAdmin);
+
+    expect(res.status).toBe(500); //errror coming from mongo
+  });
+
+  it('should return 400 when username already exists', async () => {
+    const existingAdmin = {
+      username: 'existingadmin',
+      name: 'Existing Admin',
+      email: 'existingadmin@example.com',
+      password: 'existingpassword',
+      roles: ['admin']
+    };
+
+    // First, create the admin
+    await request(app)
+      .post('/api/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(existingAdmin);
+
+    // Try to create the same admin again
+    const res = await request(app)
+      .post('/api/admin')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(existingAdmin);
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('DELETE /api/admin/:id', () => {
+  it('should delete the admin and return 200', async () => {
+    const res = await request(app)
+      .delete(`/api/admin/${adminId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe(true);
+    expect(res.body.message).toBe(`Admin ${TEST_ADMIN.username} deleted successfully`);
+  });
+
+  it('should return 404 when no admin id is provided', async () => {
+    const res = await request(app)
+      .delete('/api/admin/')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('should return 404 when admin id is not found', async () => {
+    const wrongId = '60d9e3f5b4c2b2d6b8a232c9'; // Invalid ID format
+    const res = await request(app)
+      .delete(`/api/admins/${wrongId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(404);
+  });
+});
+```
+
+*Τωρα που εφτιαξα τον αντμιν μου πρέπει να δημιουργήσω ένα Login για να μπορεί να συνδεθει*
+
+# δημιουργία admin login
+*EDIT: το προβλημα ήταν στο οτι το url και redirect URI μετα την αλλαγή πορτ, έπρεπε να δηλωθούν και στο google console. Το google login έχει προβληματα. Το βάζω εδω αλλα αργότερα θα αλαχθει* https://console.cloud.google.com/apis/credentials
+#### auth.service.js
+```js
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+const { OAuth2Client } = require('google-auth-library')
+
+// δημιουγια τοκεν sevice
+generateAccessToken = (user) => {
+  // μέσα στο τοκεν βρίσκονται αποθηκευμένες στο string του οι διάφορες πληροφορίες του payload
+  const payload = {
+    username: user.username,
+    email: user.email,
+    roles: user.roles,
+    id: user._id
+  }
+
+  // χρειάζομαι ένα secret δικό μου που το αποθηκεύω στο .env
+  const secret = process.env.SECRET
+  // μέσα στο options μπορώ να βάλω πότε λίγει
+  const options = {
+    expiresIn: '1h'
+  }
+  // με .sign γίνετε η δημιουργία
+  const token = jwt.sign(payload, secret, options)
+  return token
+}
+
+const verifyPassword = async (password, hashedPassword) => {
+  // ΠΡΟΣΟΧΗ αυτό είναι bcrypt και οχι JWT που χρησιμοποιώ κατα κύριο λογο και αυτό είναι για εσωτερική χρήση. Mε .compare και δίνοντας το δικό μου pass και το pass απο το input γινετε η επιβεβαίωση
+  return await bcrypt.compare(password, hashedPassword)
+}
+
+// επιβεβαίωση τοκεν
+const verifyAccessToken = (token) => {
+  const secret = process.env.SECRET
+  try {
+    // JWT με .verify επιβεβαιώνει το τοκεν
+    const payload = jwt.verify(token, secret)
+    return { 
+      verified: true, data: payload
+    }
+  } catch (error) {
+    return { 
+      verified: false, data: error.message
+    }
+  }
+}
+
+// μου γυρνάει το τοκεν ως αλφαρηθμιτικο
+const getTokenFrom = (req) => {
+  // το παίρνει απο τους header του request, θα ξεκινάει με bearer
+  const authorization = req.get('authorization')
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    // γυρνάω το τοκεν χωρίς το bearer
+    const token = authorization.replace('Bearer ', '')
+    return token    
+  }
+  return null
+}
+
+const googleAuth = async (code) => {
+  // αυτά τα παίρνω απο το https://console.cloud.google.com/apis/credentials
+  const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+  const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+  const REDIRECT_URI = process.env.REDIRECT_URI;
+
+  // τα παιρνάω στη βιβλιοθήκη το google
+  const oauth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+
+  try {
+    // Exchange code for tokens
+    const { tokens } = await oauth2Client.getToken(code)
+    // console.log("Step 1", tokens)
+    oauth2Client.setCredentials(tokens)
+
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: CLIENT_ID
+    });
+
+    // console.log("Step 2")
+    const userInfo = await ticket.getPayload();
+    return {admin: userInfo, tokens}
+  } catch (error) {
+    console.log("Error in google authentication", error);
+    return { error: "Failed to authenticate with google"}
+  }
+}
+
+module.exports = {
+  generateAccessToken,
+  verifyPassword,
+  verifyAccessToken,
+  getTokenFrom,
+  googleAuth
+}
+```
+#### auth.controller.js
+```js
+// site με πληροφοριες για το πως να φτιαχτει
+// https://github.com/mkarampatsis/coding-factory7-nodejs/blob/main/usersApp/controllers/auth.controller.js
+// https://fullstackopen.com/en/part4/token_authentication
+const bcrypt = require ('bcrypt')
+const jwt = require('jsonwebtoken');
+const logger = require('../utils/logger');
+// καλώ πράγματα και απο το auth και απο τον admin
+const Admin = require('../models/admins.models')
+const authService = require('../services/auth.service')
+const adminDAO = require('../daos/admin.dao')
+
+const FRONTEND_URL = process.env.FRONTEND_URL
+exports.login = async (req,res) => {
+  try {
+    // μου έχει έρΘει (απο το postman) κάτι σαν object {} με username και password
+    const username = req.body.username
+    const password = req.body.password
+
+    if (!username) {
+      logger.warn("Login attempt missing username");
+      return res.status(400).json({
+        status: false,
+        message: "Username is required"
+      });
+    }
+    
+    if (!password) {
+      logger.warn("Login attempt missing password");
+      return res.status(400).json({
+        status: false,
+        message: "Password is required"
+      });
+    }
+
+    // Step 1: Find the admin by username
+    const admin = await adminDAO.findAdminByUsername(req.body.username);
+
+    if(!admin){
+      logger.warn(`Failed login attempt - user not found: ${username}`);
+      return res.status(401).json({
+        status: false,
+        message: 'Invalid username or password or admin not found'
+      })
+    }
+
+    // Step 2: Check the password
+    const isMatch = await authService.verifyPassword (password, admin.hashedPassword)
+
+    if(!isMatch){
+      logger.warn(`Failed login attempt - incorrect password for user: ${username}`);
+      return res.status(401).json({
+        status: false,
+        message: 'Invalid username or password'
+      })
+    }
+
+    // Step 3: Generate the token
+    const token = authService.generateAccessToken(admin)
+    logger.info(`Admin ${admin.username} logged in successfully`);
+
+    // Step 4: Return the token and user info
+    res.status(200).json({
+      status: true,
+      data: {
+        token: token,
+        admin: {
+          username: admin.username,
+          email: admin.email,
+          roles: admin.roles,
+          id: admin._id
+        }
+      }
+    })
+
+  } catch (error) {
+    logger.error(`Login error: ${error.message}`);
+    res.status(400).json({
+      status: false,
+      data: error.message
+    })
+  }
+}
+
+exports.googleLogin = async(req, res) => {
+  // αυτόν τον code μου τον επιστρέφει το google μετά το login
+  const code = req.query.code
+  if (!code) {
+    logger.warn('Google login failed: missing auth code');
+    res.status(400).json({status: false, data: "auth code is missing"})
+  } 
+
+  // Μέσο στου σερβισ κάνω το google login
+  const result = await authService.googleAuth(code);
+    logger.info('Google Auth Result', { result });
+
+  // απο τα αποτελέσματ ατου login βάζω σε δύο μεταβλητές το admin και tokens
+  const { admin, tokens } = result;
+
+  if (!admin || !admin.email) {
+    logger.warn('Google login failed: no email returned');
+    return res.status(401).json({ status: false, data: "Google login failed" });
+  }
+
+  // 🔐 Create token for your app (JWT etc.)
+  // 🛑 Only use existing user
+  const dbUser = await Admin.findOne(
+    { email: admin.email }
+  );
+
+  // συμαντικό: εδω κάνουμε redirect στο front αν το login είναι μέν επιτυχημένο αλλα το μέηλ δεν είναι στα mail των admin
+  if (!dbUser) {
+    logger.warn(`Google login failed: user with email ${admin.email} not found in DB`);
+    return res.redirect(`${FRONTEND_URL}/login?error=not_registered`).json({ status: false, data: "User not registered" });
+  }
+
+  const payload = { id: dbUser._id, roles: dbUser.roles };
+  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+  // return res.redirect(`http://localhost:5173/google-success?token=${token}&email=${dbUser.email}`);
+  const frontendUrl = process.env.FRONTEND_URL
+  logger.info(`Redirecting to: ${frontendUrl}/google-success`);
+  
+  return res.redirect(`${frontendUrl}/google-success?token=${token}&email=${dbUser.email}`);
+}
+```
+#### middleware/verification.middleware.js
+```js
+
+const authService = require('../services/auth.service');
+
+/**
+ * Middleware to verify JWT token.
+ * Attaches decoded user data to `req.user` if valid.
+ */
+const verifyToken = (req, res, next) => { // το next είναι που το κάνει middleware
+  const token = authService.getTokenFrom(req);
+  const verificationResult = authService.verifyAccessToken(token);
+
+  if (!verificationResult.verified) {
+    console.log(`Unauthorized access attempt with token: ${token}`);
+    return res.status(401).json({
+      status: false,
+      error: verificationResult.data
+    });
+  }
+
+  req.user = verificationResult.data;
+  next();
+};
+
+/**
+ * Middleware to check if user has required role.
+ * Call after verifyToken middleware.
+ */
+const checkRole = (requiredRole) => {
+  return (req, res, next) => {
+    const user = req.user;
+
+    if (!user || !user.roles.includes(requiredRole)) {
+      console.log(`Forbidden access by user: ${user?.username || 'unknown'}`);
+      return res.status(403).json({
+        status: false,
+        error: 'Forbidden'
+      });
+    }
+
+    next();
+  };
+};
+
+module.exports = {
+  verifyToken,
+  checkRole
+};
+```
+### auth.routes.js
+```js
+const express = require('express')
+const router = express.Router()
+const authController = require('../controllers/auth.controller')
+
+router.post('/', authController.login)
+router.get('/google/callback', authController.googleLogin)
+
+module.exports = router
+```
+#### swagger για auth routes
+```js
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: Authentication endpoints
+ */
+
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: Login with username and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: admin123
+ *               password:
+ *                 type: string
+ *                 example: MySecurePassword1!
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                     admin:
+ *                       type: object
+ *                       properties:
+ *                         username:
+ *                           type: string
+ *                           example: admin123
+ *                         email:
+ *                           type: string
+ *                           format: email
+ *                           example: admin@example.com
+ *                         roles:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                           example: ["admin"]
+ *                         id:
+ *                           type: string
+ *                           example: 609e12672f1b2c001f2b1234
+ *       400:
+ *         description: Missing credentials or other error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Username is required
+ *       401:
+ *         description: Invalid username or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid username or password
+ */
+router.post('/', authController.login)
+
+/**
+ * @swagger
+ * /auth/google/callback:
+ *   get:
+ *     summary: Google OAuth login callback
+ *     tags: [Auth]
+ *     description: Handles the OAuth callback from Google. Redirects to frontend with token on success, or with an error on failure.
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The authorization code returned from Google
+ *     responses:
+ *       302:
+ *         description: Redirect to frontend with token and email on success
+ *         headers:
+ *           Location:
+ *             description: Redirect URL including token and email query params
+ *             schema:
+ *               type: string
+ *       400:
+ *         description: Missing authorization code from Google
+ *       401:
+ *         description: Email not found in database (user not registered)
+ */
+router.get('/google/callback', authController.googleLogin)
+```
+
+*Εχω ένα ετοιμο φτιαγμένο λινκ για να δοκιμαζω το google auth χωρις να χρειάζομαι το front end*
+```url
+https://accounts.google.com/o/oauth2/auth?client_id={apo_to_google}&redirect_uri={apo_to_google}&response_type={apo_to_auth.service}&scope=email%20profile&access_type=offline
+
+// αυτό είναι του combined app
+https://accounts.google.com/o/oauth2/auth?client_id=37391548646-a2tj5o8cnvula4l29p8lodkmvu44sirh.apps.googleusercontent.com&redirect_uri=http://localhost:3000/api/login/google/callback&response_type=code&scope=email%20profile&access_type=offline
+```
+
+#### app.js
+```js
+const loginRoutes = require('./routes/auth.routes')
+
+app.use('/api/login', loginRoutes)
+```
+
+#### με ποστμαν
+- post στο http://localhost:3001/api/login
+- με raw json
+```
+{
+    "username":"alkisax",
+    "password":"123"
+}
+```
+- παιρνω πισω κάτι σαν
+```html
+{
+    "status": true,
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsa2lzYXgiLCJlbWFpbCI6ImFsa2lzYXhAZ21haWwuY29tIiwicm9sZXMiOlsiYWRtaW4iXSwiaWQiOiI2ODA5MjEwZWE3NDgxNTkwZTk3NTk4NjYiLCJpYXQiOjE3NDYyNjIzODYsImV4cCI6MTc0NjI2NTk4Nn0.AwJbBUDxPCGuDQhnfo41vAblA2fhv3RJ-CwMpgD759c",
+        "admin": {
+            "username": "alkisax",
+            "email": "alkisax@gmail.com",
+            "roles": [
+                "admin"
+            ],
+            "id": "6809210ea7481590e9759866"
+        }
+    }
+}
+```
+
+#### __test__/auth.test
+```js
+const mongoose = require("mongoose");
+const request = require("supertest");
+const bcrypt = require("bcrypt");
+require('dotenv').config();
+const app = require("../app");
+
+const Admin = require("../models/admins.models");
+
+// Add this mock at the top of your test file to ensure it doesn't interact with the actual Stripe service during tests.
+jest.mock('stripe', () => {
+  return jest.fn().mockImplementation(() => ({
+    // Mock the methods you need, e.g., charge, paymentIntents, etc.
+    charges: {
+      create: jest.fn().mockResolvedValue({ success: true })
+    }
+  }));
+});
+
+
+const TEST_ADMIN_LOGIN = {
+  username: "adminuser",
+  name: "Admin User",
+  email: "admin@example.com",
+  password: "securepassword",
+  roles: ["admin"]
+};
+
+beforeEach(async () => {
+  await mongoose.connect(process.env.MONGODB_TEST_URI);
+  await Admin.deleteMany({});
+
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(TEST_ADMIN_LOGIN.password, saltRounds);
+
+  await Admin.create({
+    username: TEST_ADMIN_LOGIN.username,
+    name: TEST_ADMIN_LOGIN.name,
+    email: TEST_ADMIN_LOGIN.email,
+    hashedPassword: hashedPassword,
+    roles: TEST_ADMIN_LOGIN.roles
+  });
+});
+
+afterAll(async () => {
+  await Admin.deleteMany({});
+  await mongoose.disconnect();
+});
+
+describe("POST /api/login", () => {
+  it("should return token and admin data for valid credentials", async () => {
+    const res = await request(app)
+      .post("/api/login")
+      .send({
+        username: TEST_ADMIN_LOGIN.username,
+        password: TEST_ADMIN_LOGIN.password
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe(true);
+    expect(res.body.data.token).toBeDefined();
+    expect(res.body.data.admin).toMatchObject({
+      username: TEST_ADMIN_LOGIN.username,
+      email: TEST_ADMIN_LOGIN.email,
+      roles: TEST_ADMIN_LOGIN.roles
+    });
+  });
+
+  it("should fail with incorrect password", async () => {
+    const res = await request(app)
+      .post("/api/login")
+      .send({
+        username: TEST_ADMIN_LOGIN.username,
+        password: "wrongpassword"
+      });
+
+    expect(res.statusCode).toBe(401);
+    expect(res.body.status).toBe(false);
+    expect(res.body.message).toBe("Invalid username or password");
+  });
+
+  it("should fail with non-existent username", async () => {
+    const res = await request(app)
+      .post("/api/login")
+      .send({
+        username: "ghostuser",
+        password: "anyPassword"
+      });
+
+    expect(res.statusCode).toBe(401);
+    expect(res.body.status).toBe(false);
+    expect(res.body.message).toBe("Invalid username or password or admin not found");
+  });
+
+  it("should fail if username is missing", async () => {
+    const res = await request(app)
+      .post("/api/login")
+      .send({
+        password: TEST_ADMIN_LOGIN.password
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.status).toBe(false);
+    expect(res.body.message).toBe("Username is required");
+  });
+
+  it("should fail if password is missing", async () => {
+    const res = await request(app)
+      .post("/api/login")
+      .send({
+        username: TEST_ADMIN_LOGIN.username
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.status).toBe(false);
+    expect(res.body.message).toBe("Password is required");
+  });
+});
+```
+# front login
+#### App.jsx
+```jsx
+const App = () => {
+  const [user, setUser] = useState(null)
+  const [message, setMessage] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [userIsAdmin, setUserIsAdmin] = useState(false)
+  const [users, setUsers] = useState([])
+  const [admin, setAdmin] = useState(null)
+
+  const navigate = useNavigate()
+  
+  //
+  useEffect(() => {
+    // παίρνω απο το lockalstorage το token και το roles για να δω αν έχει κάνει login και αν είναι admin
+    const token = localStorage.getItem("token")
+    const roles = JSON.parse(localStorage.getItem("roles"))
+    const adminFromStorage = JSON.parse(localStorage.getItem("admin"))
+    if (token && roles && roles.includes('admin') && adminFromStorage) {
+      const userFromStorage = { token, roles }
+      setAdmin(userFromStorage)
+      setUserIsAdmin(true) 
+    }
+  }, [])
+
+  const handleLogin = async (event) => {
+    event.preventDefault()
+    console.log("Submitting login...")
+
+    try {
+      const response = await axios.post(`${url}/login`, {
+        "username": username,
+        "password": password
+      })
+      console.log("Login successful", response.data)
+
+      const { token, admin } = response.data.data
+      setUser(admin)
+
+      // αποθηκεύω στο lockalstorage για να παραμένει loged in μετα το refresh
+      localStorage.setItem("token", token)
+      localStorage.setItem("roles", JSON.stringify(admin.roles))
+
+      setAdmin({ token, roles: admin.roles })
+      localStorage.setItem("admin", JSON.stringify(admin));
+
+      // η isAdmin είναι boolean και την χρησιμοποιώ με && στα διάφορα render που είναι να τα βλέπει μόνο ο admin
+      const isAdmin = admin.roles.includes("admin")
+      setUserIsAdmin(isAdmin)
+      console.log("Is admin?", isAdmin)
+
+    } catch (error) {
+      console.log(error)     
+    }
+    
+    // αυτό μπορούμε να το χρησιμοποιήσουμε γιατί έχουμε  const navigate = useNavigate() και μας οδηγεί στο home
+    navigate("/")
+  }
+
+  const handleLogout = async () => {
+    // καθαρίζουμε το localStorage και το State
+    localStorage.removeItem("token")
+    localStorage.removeItem("roles");
+    localStorage.removeItem("admin");
+    setAdmin(null)
+    setUserIsAdmin(false)
+    console.log("Logged out successfully")
+    navigate("/")
+  }
+
+// το login route είναι για να με πάει στην φορμα του Login
+// το admin route είναι για να με πάει στο login panel
+// το Protected route  βεβαιώνει οτι δεν μπορουν να το δουν μη-admin ακομα και αν το γράψουν στο Url
+  return (
+    // το μενου παρακάτω 
+      άλλο 
+    <Appbar 
+      admin={admin}
+      handleLogout={handleLogout}
+    />
+
+    <Routes>
+        <Route path="/" element={
+          <>
+            <Home 
+              message={message}
+              setMessage={setMessage}
+              url={url}
+            />
+          </>
+        } />
+
+        <Route path="/login" element={
+          <>
+            <LoginForm 
+              username={username}
+              password={password}
+              setUsername={setUsername}
+              setPassword={setPassword}
+              handleLogin={handleLogin}
+              url={url}
+            />
+          </>
+        } />
+
+        <Route path="/admin" element={
+          <>
+            // το πως γίνετε Protected route ακολουθεί αμέσος επόμενο
+            <ProtectedRoute admin={admin} requiredRole="admin"></ProtectedRoute>
+            <AdminPanel
+              url={url}
+              // handleDeleteParticipant={handleDeleteParticipant}
+              // participants={participants}
+              // setParticipants={setParticipants}
+              // αυτά μόλλον είναι περιτα
+              users={users}
+              setUsers={setUsers}
+            />
+          </>
+        } />  
+    </Routes>
+  )
+}
+export default App
+```
+
+#### ProtectedRoute.jsx
+```jsx
+import { Navigate } from 'react-router-dom';
+
+const ProtectedRoute = ({ admin , children, requiredRole }) => {
+
+  if (admin === null) {
+    return <div>Loading...</div>; 
+  }
+
+  if (!admin) {
+    console.log("protected failed");    
+    return <Navigate to="/" />;
+  }
+
+  if (requiredRole && !admin?.roles?.includes(requiredRole)) {
+    console.log("protected passed"); 
+    return <Navigate to="/admin" />;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;
+```
+
+#### Appbar.jsx
+```jsx
+import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { Link, Routes, Route } from 'react-router-dom';
+
+const Appbar = ({ admin, handleLogout }) => {
+
+  const padding = {
+    paddingRight: 5,
+  };
+
+  return (
+    <>
+      <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
+        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+        <Navbar.Collapse id="responsive-navbar-nav">
+        <Nav className="me-auto">
+
+          // έχει μέσα του διάφορα λινκ.
+          <Nav.Link as={Link} to="/" style={padding}>
+            Home
+          </Nav.Link>
+
+          <Nav.Link as={Link} to="/buymeacoffee" style={padding}>
+            Buy me a coffee
+          </Nav.Link>
+
+          // turnary. αν αντμιν δειξε αν οχι μη δείξεις
+          {admin ? (
+            <div className="d-flex flex-column align-items-start ml-auto" style={{ padding }}>
+              <em style={{ paddingRight: 10 }}>{admin.token ? 'Admin logged in' : 'Logged in'}</em>
+              <Nav.Link as={Link} to="/admin" style={padding}>
+                Admin Pannel
+              </Nav.Link>
+              <Button variant="outline-light" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Nav.Link as={Link} to="/login" style={padding}>
+              Admin Login
+            </Nav.Link>
+          )}
+
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
+    </>
+  )
+}
+export default Appbar
+```
+
+#### Home.jsx /
+```jsx
+import { useEffect, useRef } from 'react'
+import axios from 'axios'
+import { useSearchParams } from 'react-router-dom'
+
+const Home = ({ message, setMessage, url }) => {
+  // // επειδή εδώ ξαναγυρνάμε και στο success ή fail του Stripe Checkout με url parms, εδώ ειναι η λογική που το διαχειρίζετε αυτό. Tο αφήνω εδώ αλλα θα το προσθέσω ξανα στην ώρα του
+  // // επρεπε να γίνει γιατι καλούσε το success 2 φορες δημιουργώντας 2 transactions
+  // // το useRef είναι σαν το state αλλα δεν προκαλει refresh
+  // const hasCalledSuccessRef = useRef(false);
+
+  // // παίρνει τα url parms
+  // const [searchParams] = useSearchParams()
+  // useEffect(() => {
+  //   const canceled = searchParams.get('canceled'); 
+  //   const success = searchParams.get('success')
+  //   // added to manage to call stripe.controller.js handlesucces from frontend
+  //   const sessionId = searchParams.get('session_id');
+  //   console.log("sessionId", sessionId);
+    
+
+  //   if (success === 'true' && sessionId && !hasCalledSuccessRef.current){
+  //     // επρεπε να φτιαξω μια νεα function γιατι το axios δεν δουλευε αλλιώς
+  //     const fetchSuccess = async () => {
+  //       try {
+  //         // θα μας δημιουργήσει το transaction
+  //         const result = await axios.get(`${url}/stripe/success?session_id=${sessionId}`)
+  //         console.log("Success response:", result.data);
+  //         // για να εμποδίσει επανάληψη της κλήσης
+  //         hasCalledSuccessRef.current = true;
+  //       } catch (error) {
+  //         console.error ("Error handling success:", error)
+  //       }
+  //     }
+  //     fetchSuccess()
+  //     // το message του success δεν εχει timeout
+  //     setMessage(`Payment successful! thank you! :)
+  //                 you will soon receive an email with the details`)
+  //   }
+
+  //   if (canceled === 'true') {
+  //     setMessage('Payment canceled! :(');
+  //     setTimeout(() => {
+  //       setMessage('');
+  //     }, 7000); 
+  //   }
+
+  // }, [searchParams, setMessage, url]) // τρέχει οποτε αλλάξει κάποιο απο αυτά
+
+  return (
+    <>
+      // {message && (
+      //   <div className={`alert ${message.includes('canceled') ? 'alert-danger' : 'alert-success'} pb-3`} role="alert">
+      //     {message}
+      //   </div>
+      // )}
+
+      <h1>Donate APP</h1>
+      <p>stripe + login app</p>
+      <p className="text-center text-secondary small">to create an admin has to be done through backend with postman.
+        post http://localhost:3000/api/admin
+        {`{
+          "username": "newadmin",
+          "name": "New Admin",
+          "email": "newadmin@example.com",
+          "password": "password123",
+          "roles": ["admin"] 
+        }`}
+        </p>
+      {/* <Checkout /> */}
+    </>
+  )
+}
+
+export default Home
+```
+
+#### LoginForm.jsx /login
+```jsx
+
+const LoginForm = ({ username, password, setUsername, setPassword, handleLogin, url }) =>{
+
+  // βάζω προκατασκευασμένο url
+  const googleUrl = `https://accounts.google.com/o/oauth2/auth?client_id=37391548646-a2tj5o8cnvula4l29p8lodkmvu44sirh.apps.googleusercontent.com&redirect_uri=${url}/login/google/callback&response_type=code&scope=email%20profile&access_type=offline`;
+
+  return (
+    <>
+      <form onSubmit={handleLogin}>
+        <div>
+          username
+          <input type="text"
+          id="username"
+          value={username}
+          name="username"
+          onChange={({target}) => setUsername(target.value)}
+          autoComplete="username"
+          />
+        </div>
+        <div>
+          password
+          <input type="text"
+          id="password"
+          value={password}
+          name="password"
+          onChange={({target}) => setPassword(target.value)}
+          autoComplete="password"
+          />
+        </div>
+        <button id="loginBtn" type="submit">login</button>
+      </form>
+
+      <a href={googleUrl}>
+        <button id="GoogleLoginBtn" type="button">Login with Google</button>
+      </a>
+    </>
+  )
+}
+export default LoginForm
+```
+## Είναι ακόμα προβληματικό. To log in γινετε μεσο google αλλα
+- αντι να απορίψει αν είναι admin δημιουργεί έναν καινούργιο
+- - λύθηκε: το πρόβλημα ήταν οτι το back έκανε find one and update, αντί για find one
+- αν είναι admin δεν του επιτρέπει να πάει στον admin panel
+- - Λύθηκε: το πρόβλημα ήταν η ασυμφωνια των δεδομένων του google με αυτά στο mongo db. Κράτάει μόνο το μέηλ κ του βάζει ρόλο admin.
+#### GoogleSucces.jsx
+```jsx
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
+
+const GoogleSuccess = ({ setAdmin, setIsAdmin}) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const email = params.get('email');
+
+    if (!token) {
+      console.log("login failed");
+      return navigate('/login');
+    }
+
+    if (token) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('email', email);
+
+      // Decode token and extract roles
+      const decoded = jwtDecode(token);
+      console.log('Decoded JWT:', decoded);
+      const adminData = {
+        email,
+        id: decoded.id,
+        roles: ['admin'], // Set roles as admin since only admins can log in
+      };
+  
+      localStorage.setItem('admin', JSON.stringify(adminData));
+    
+      setAdmin(true);
+      setIsAdmin(adminData);
+
+      // Redirect to dashboard or homepage
+      navigate('/');
+    } else {
+      console.log("login failed");      
+      navigate('/login');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <div>Logging you in via Google...</div>;
+};
+
+export default GoogleSuccess;
+```
+
+**μεχρι εδώ ήταν κοπι πειστ απο το ταροτ**
+
 - protected page admin login
 - apearance
 - deploy 

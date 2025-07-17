@@ -11,6 +11,8 @@ import Marker from '@editorjs/marker';
 import InlineCode from '@editorjs/inline-code';
 import ImageTool from '@editorjs/image';
 import AttachesTool from '@editorjs/attaches';
+import Embed from '@editorjs/embed'
+import Quote from '@editorjs/quote'
 
 import AlignmentTuneTool from 'editorjs-text-alignment-blocktune'; // δεν είχε justify alignment αλλά είχε διαφορ καλά για headers και list Οπότε το κρατάω και χρησιμοποιω το Pargraph-with-alignment για το justify
 import Paragraph from 'editorjs-paragraph-with-alignment';
@@ -64,6 +66,13 @@ export const useInitEditor = (editorRef, backEndUrl) => {
                 // byFile: `${backEndUrl}/api/images`,
                 byFile: `${backEndUrl}/api/uploads`,
               },
+              captionPlaceholder: 'Add a caption...', 
+              features: {
+                border: true,
+                stretched: true,
+                background: true,
+                caption: true
+              }
             },
           },
           attaches: {
@@ -75,6 +84,37 @@ export const useInitEditor = (editorRef, backEndUrl) => {
               buttonText: 'Upload File',
               errorMessage: 'Upload failed'
             }
+          },
+          embed: {
+            class: Embed,
+            inlineToolbar: true,
+            config: {
+              services: {
+                youtube: true,
+                vimeo: true,
+                twitter: true,
+                instagram: true,
+                facebook: true,
+                tiktok: true,
+                soundcloud: true,
+                twitch: true,
+                pinterest: true,
+                spotify: true,
+                codepen: true,
+                jsfiddle: true,
+                giphy: true,
+                imgur: true,
+              }
+            }
+          },
+          quote: {
+            class: Quote,
+            inlineToolbar: true,
+            shortcut: 'CMD+SHIFT+O',
+            config: {
+              quotePlaceholder: 'Enter a quote',
+              captionPlaceholder: "Quote's author",
+            },
           },
         },
         onReady: () => {

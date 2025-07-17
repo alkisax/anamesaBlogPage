@@ -6,7 +6,13 @@ function FooterHomepage() {
 
   // Navigation handler for Dashboard
   const navigateToDashboard = () => {
-    navigate("/dashboard");
+    const storedAdmin = localStorage.getItem("admin");
+    const adminData = storedAdmin ? JSON.parse(storedAdmin) : null;
+    if (adminData && adminData.roles.includes("admin")) {
+      navigate("/dashboard"); // Admin -> dashboard
+    } else {
+      navigate("/login"); // Not admin -> login
+    }
   };
 
   return (

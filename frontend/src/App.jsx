@@ -10,79 +10,128 @@ import BlogPost from './pages/BlogPost';
 import EditBlogPost from './pages/EditBlogPost';
 import UploadedFiles from './pages/UploadedFiles'
 
-function App() {
-  const [editorJsData, setEditorJsData] = useState({})
+import useAuth from "./hooks/useAuth"
+import LoginForm from './service/login/LoginForm';
+import ProtectedRoute from './service/login/ProtectedRoute'
 
+const App = () => {
+  const [editorJsData, setEditorJsData] = useState({})
+ 
   const backEndUrl = 'http://localhost:3001'
+
+  const {
+    admin,
+    username,
+    password,
+    setUsername,
+    setPassword,
+    handleLogin,
+    handleLogout,
+    message,
+  } = useAuth(backEndUrl); //custom hook με ολες τις λειτουργίες του login
+
+  const isAdmin = admin?.roles?.includes("admin");
+  if (isAdmin !== null) console.log("App: is admin?", isAdmin)
+  else console.log("App: is admin? no")
 
   return (
     <>
-      <BrowserRouter>
+      <Routes>
+        {/* Parent route with Layout */}
+        {/* αυτό το  route δεν τελειώνει εδω αλλα περικλύει όλα τα υπόλοιπα */}
+        <Route element={
+          <Layout 
+            backEndUrl={backEndUrl}
+            username={username}
+            password={password}
+            setUsername={setUsername}
+            setPassword={setPassword}
+            handleLogin={handleLogin}
+            handleLogout={handleLogout}
+            isAdmin={isAdmin}
+            admin={admin}
+          />
+        }> 
 
-        
-          <Routes>
-            {/* Parent route with Layout */}
-            <Route element={<Layout backEndUrl={backEndUrl} />}>
+          <Route 
+            path="/" 
+            element={<Homepage 
+              editorJsData={editorJsData} 
+              setEditorJsData={setEditorJsData}
+              backEndUrl={backEndUrl}
+            />}
+          />
 
-            <Route 
-              path="/" 
-              element={<Homepage 
-                editorJsData={editorJsData} 
-                setEditorJsData={setEditorJsData}
-                backEndUrl={backEndUrl}
-              />}
-            />
+          <Route 
+            path="/dashboard" 
+            element={
+              <>
+                <ProtectedRoute admin={admin} requiredRole="admin">
+                  <Dashboard 
+                    editorJsData={editorJsData} 
+                    setEditorJsData={setEditorJsData}
+                    backEndUrl={backEndUrl}
+                    handleLogout={handleLogout}
+                    message={message}
+                  />
+                </ProtectedRoute>         
+              </>
+            }
+          />
 
-            <Route 
-              path="/dashboard" 
-              element={<Dashboard 
-                editorJsData={editorJsData} 
-                setEditorJsData={setEditorJsData}
-                backEndUrl={backEndUrl}
-              />}
-            />
+          <Route
+            path="/posts"
+            element={<Posts 
+              backEndUrl={backEndUrl}
+            />}
+          />
 
-            <Route
-              path="/posts"
-              element={<Posts 
-                backEndUrl={backEndUrl}
-              />}
-            />
+          <Route 
+            path="/posts/:id" 
+            element={<BlogPost 
+              backEndUrl={backEndUrl} 
+            />}
+          />
 
-            <Route 
-              path="/posts/:id" 
-              element={<BlogPost 
-                backEndUrl={backEndUrl} 
-              />}
-            />
+          <Route 
+            path="/edit/:id" 
+            element={<EditBlogPost
+              editorJsData={editorJsData}
+              setEditorJsData={setEditorJsData}
+              backEndUrl={backEndUrl}
+              isEditMode={true}
+            />}
+          />
 
-            <Route 
-              path="/edit/:id" 
-              element={<EditBlogPost
-                editorJsData={editorJsData}
-                setEditorJsData={setEditorJsData}
-                backEndUrl={backEndUrl}
-                isEditMode={true}
-              />}
-            />
+          <Route 
+            path="/uploads" 
+            element={<UploadedFiles 
+              backEndUrl={backEndUrl}
+            />} 
+          />
 
-            <Route 
-              path="/uploads" 
-              element={<UploadedFiles 
-                backEndUrl={backEndUrl}
-              />} 
-            />
+          <Route path="/login" element={
+            <>
+              <LoginForm 
+                username={username}
+                password={password}
+                setUsername={setUsername}
+                setPassword={setPassword}
+                handleLogin={handleLogin}
+                url={backEndUrl}
+              />
+            </>
+          } />
 
-            <Route
-              path="/:name"
-              element={<Subpage 
-                backEndUrl={backEndUrl}
-              />}
-            />
-            </Route>
-          </Routes>
+          <Route
+            path="/:name"
+            element={<Subpage 
+              backEndUrl={backEndUrl}
+            />}
+          />
 
-      </BrowserRouter>
+        </Route>
+      </Routes>
     </>
   )
 }
