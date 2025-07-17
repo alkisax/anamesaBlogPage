@@ -59,6 +59,7 @@ const App = () => {
               editorJsData={editorJsData} 
               setEditorJsData={setEditorJsData}
               backEndUrl={backEndUrl}
+              admin={admin}
             />}
           />
 
@@ -89,7 +90,8 @@ const App = () => {
           <Route 
             path="/posts/:id" 
             element={<BlogPost 
-              backEndUrl={backEndUrl} 
+              backEndUrl={backEndUrl}
+              admin={admin}
             />}
           />
 

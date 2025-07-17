@@ -5092,7 +5092,8 @@ export default GoogleSuccess;
 
 **μεχρι εδώ ήταν κοπι πειστ απο το ταροτ**
 
-- protected page admin login
+- analytics
+- remove btns if not admin
 - apearance
 - deploy 
 
