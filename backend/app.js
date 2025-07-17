@@ -3,10 +3,11 @@ const cors = require('cors')
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./utils/swagger');
 // θα προστεθούν πολλα τέτοια endpoints οπως προχωρά η εφαρμογη
-// const todoRoutes = require('./routes/todo.routes')
 const uploadRoutes = require('./routes/upload.routes'); 
 const postRoutes = require('./routes/post.routes')
 const subPageRoutes = require('./routes/subPage.routes')
+const adminRoutes = require('./routes/admin.routes')
+const loginRoutes = require('./routes/auth.routes')
 
 // αυτό ειναι κάτι που ίσως μου χρειαστεί στο deploy και δεν το καταλαβαίνω καλα. (και παρακάτω μαζί με αυτό)
 const path = require('path'); // requires explanation. added for rendering front page subpages
@@ -30,6 +31,8 @@ app.use('/ping', (req, res) => {
 app.use('/api/uploads', uploadRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/subPages', subPageRoutes)
+app.use('/api/admin', adminRoutes)
+app.use('/api/login', loginRoutes)
 
 // swagger test page
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))

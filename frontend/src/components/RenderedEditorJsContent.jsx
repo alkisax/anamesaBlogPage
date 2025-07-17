@@ -125,6 +125,49 @@ const RenderedEditorJsContent = ({ editorJsData, subPageName }) => {
               </div>
             );
           }
+          if (block.type === 'embed') {
+            return (
+              <div key={index} style={{ margin: '1em 0' }}>
+                <iframe
+                  src={block.data.embed}
+                  width={block.data.width}
+                  height={block.data.height}
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  frameBorder="0"
+                  title="Embedded content"
+                  style={{ maxWidth: '100%' }}
+                />
+                {block.data.caption && (
+                  <p style={{ fontSize: '0.9em', color: '#555', textAlign: 'center' }}>
+                    {block.data.caption}
+                  </p>
+                )}
+              </div>
+            );
+          }
+          if (block.type === 'quote') {
+            const alignment = block.data.alignment || 'left';
+            return (
+              <blockquote
+                key={index}
+                style={{
+                  textAlign: alignment,
+                  fontStyle: 'italic',
+                  borderLeft: '4px solid #ccc',
+                  padding: '0.5em 1em',
+                  margin: '1em 0',
+                }}
+              >
+                <p>{block.data.text}</p>
+                {block.data.caption && (
+                  <footer style={{ fontSize: '0.9em', color: '#666' }}>
+                    — {block.data.caption}
+                  </footer>
+                )}
+              </blockquote>
+            );
+          }
           if (block.type === 'inlineCode') {
             return <code key={index}>{block.data.code}</code>;
           }

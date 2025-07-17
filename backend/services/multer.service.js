@@ -20,6 +20,9 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   // καθοριζει που θα αποθηκεύονται τα αρχεία οριζετε στην παραπάνω const
   storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10 MB in bytes
+  },
   // Το fileFilter είναι μια συνάρτηση που ελέγχει κάθε αρχείο πριν αποθηκευτεί.
   fileFilter: (req, file, cb) => {
     console.log('reached multer upload');

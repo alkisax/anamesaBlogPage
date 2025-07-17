@@ -59,9 +59,8 @@ const Subpage = ({ backEndUrl, forcedName }) => {
               [...currentPosts]
                 .sort((a, b) => b.pinned - a.pinned)
                 .map((post) => (
-                <Link to={`/posts/${post._id}`}>
+                <Link to={`/posts/${post._id}`} key={post._id}>
                   <div 
-                    key={post._id}
                     className="bg-slate-100 text-black shadow-md rounded-2xl p-6 border border-gray-300 hover:shadow-lg transition-shadow"
                   >
                       <RenderedEditorJsContent
