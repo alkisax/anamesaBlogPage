@@ -1,15 +1,4 @@
-import {useNavigate} from "react-router-dom";
-
-const LeftSidebarDashboard = () => {
-
-  const navigate = useNavigate()
-  const navigateToPosts = () => {
-    navigate("/posts")
-  }
-
-  const navigateToUploads = () => {
-    navigate("/uploads")
-  }
+const LeftSidebarDashboard = ({ navigateToPosts, navigateToUploads }) => {
 
   return (
     <div 

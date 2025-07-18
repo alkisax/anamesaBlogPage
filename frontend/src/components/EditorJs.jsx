@@ -1,14 +1,13 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import RenderedEditorJsContent from './RenderedEditorJsContent'
 import { useInitEditor } from '../hooks/useInitEditor';
+import { handlePreview } from '../utils/editorHelper'
 
-import EditorJS from '@editorjs/editorjs';
-
-const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false }) => {
+const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, editorRef, isEditMode=false }) => {
   // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
-  const editorRef = useRef(null);
+  // const editorRef = useRef(null);
 
   // Προσθήκη λογικής για custom pages
   const [pages, setPages] = useState([]);
@@ -84,11 +83,12 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
   }, [id, isEditMode, backEndUrl]);
 
 
-  const handlePreview = async () => {
-    const outputData = await editorRef.current.save()
-    // localStorage.setItem('editorData', JSON.stringify(outputData));
-    setEditorJsData(outputData);
-  }
+  // const handlePreview = async () => {
+  //   const outputData = await editorRef.current.save()
+  //   // localStorage.setItem('editorData', JSON.stringify(outputData));
+  //   setEditorJsData(outputData);
+  // }
+  // handlePreview(editorRef, setEditorJsData)
 
   const handleSubmit = async () => {
     if(editorRef.current) {
@@ -217,7 +217,7 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false 
           </div>
           
 
-          <button onClick={handlePreview}>
+          <button onClick={() => handlePreview(editorRef, setEditorJsData)}>
             preview
           </button>
           <button onClick={handleSubmit}>

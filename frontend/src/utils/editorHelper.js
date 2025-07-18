@@ -1,3 +1,12 @@
+  export const handlePreview = async (editorRef, setEditorJsData) => {
+    if (!editorRef.current) {
+      console.error("Editor instance not ready");
+      return;
+    }
+    const outputData = await editorRef.current.save()
+    setEditorJsData(outputData);
+  }
+  
   // αυτή η συνάρτηση κρατάει μόνο την πρώτη εικόνα και τις πρώτες 70 λέξεις. Σε μεγάλο βαθμό απο GPT
   export const getPreviewContent = (content, maxWords = 70) => {
     const previewBlocks = [];
