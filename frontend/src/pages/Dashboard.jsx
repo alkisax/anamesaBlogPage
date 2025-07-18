@@ -2,6 +2,7 @@ import {useNavigate} from "react-router-dom";
 import { useRef } from 'react';
 import EditorJs from "../components/EditorJs";
 import LeftSidebarDashboard from "../components/LeftSidebarDashboard";
+import { handlePreview } from "../utils/editorHelper"
 
 function Dashboard({ editorJsData, setEditorJsData, backEndUrl }) {
   // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
@@ -29,6 +30,10 @@ function Dashboard({ editorJsData, setEditorJsData, backEndUrl }) {
           <LeftSidebarDashboard 
             navigateToPosts={navigateToPosts}
             navigateToUploads={navigateToUploads}
+            editorJsData={editorJsData} 
+            setEditorJsData={setEditorJsData}
+            editorRef={editorRef}
+            handlePreview={handlePreview}
           />          
         </div>
 

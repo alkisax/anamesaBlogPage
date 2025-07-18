@@ -1,4 +1,4 @@
-const LeftSidebarDashboard = ({ navigateToPosts, navigateToUploads }) => {
+const LeftSidebarDashboard = ({ navigateToPosts, navigateToUploads, setEditorJsData, editorRef, handlePreview }) => {
 
   return (
     <div 
@@ -25,9 +25,16 @@ const LeftSidebarDashboard = ({ navigateToPosts, navigateToUploads }) => {
         Uploaded Files
       </button>
 
+
       <br />
       <hr />
-      <strong>post</strong>
+      <strong>post:</strong>
+      <button 
+        onClick={() => handlePreview(editorRef, setEditorJsData)}
+        className="px-4 py-2 bg-blue-600 text-white rounded sm:w-full flex-shrink-0 text-sm"
+      >
+        preview
+      </button>      
       <hr />
 
 

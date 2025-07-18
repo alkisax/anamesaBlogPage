@@ -3,18 +3,15 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import RenderedEditorJsContent from './RenderedEditorJsContent'
 import { useInitEditor } from '../hooks/useInitEditor';
-import { handlePreview } from '../utils/editorHelper'
+
 
 const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, editorRef, isEditMode=false }) => {
-  // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
-  // const editorRef = useRef(null);
 
   // Προσθήκη λογικής για custom pages
   const [pages, setPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState('');
   const [newPage, setNewPage] = useState('');
   const [isPinned, setIsPinned] = useState(false);
-  // const [originalImageUrls, setOriginalImageUrls] = useState([]);
 
   useEffect(() => {
     const getpages = async () => {
@@ -81,14 +78,6 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, editorRef, isEdit
 
     fetchPost();
   }, [id, isEditMode, backEndUrl]);
-
-
-  // const handlePreview = async () => {
-  //   const outputData = await editorRef.current.save()
-  //   // localStorage.setItem('editorData', JSON.stringify(outputData));
-  //   setEditorJsData(outputData);
-  // }
-  // handlePreview(editorRef, setEditorJsData)
 
   const handleSubmit = async () => {
     if(editorRef.current) {
@@ -216,10 +205,6 @@ const EditorJs = ({ editorJsData, setEditorJsData, backEndUrl, editorRef, isEdit
             <label htmlFor="pinned" className="text-gray-700">Pinned Post</label>
           </div>
           
-
-          <button onClick={() => handlePreview(editorRef, setEditorJsData)}>
-            preview
-          </button>
           <button onClick={handleSubmit}>
             submit
           </button>
