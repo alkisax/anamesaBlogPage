@@ -6,7 +6,13 @@ import LeftSidebarDashboard from "../components/LeftSidebarDashboard";
 import { handlePreview, handleSubmit, handlePageSelect, handleNewPageSubmit } from "../utils/editorHelper"
 import { useParams } from 'react-router-dom';
 
-function Dashboard({ editorJsData, setEditorJsData, backEndUrl, editorRef, isEditMode=false }) {
+function Dashboard({
+  editorJsData,
+  setEditorJsData,
+  backEndUrl,
+  editorRef,
+  isEditMode=false
+}) {
   
   // // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
   // const editorRef = useRef(null);

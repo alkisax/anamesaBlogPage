@@ -100,7 +100,7 @@ const App = () => {
             />}
           />
 
-          <Route 
+          {/* <Route 
             path="/edit/:id" 
             element={<EditBlogPost
               editorJsData={editorJsData}
@@ -108,6 +108,18 @@ const App = () => {
               backEndUrl={backEndUrl}
               isEditMode={true}
               editorRef={editorRef}
+            />}
+          /> */}
+
+          <Route 
+            path="/edit/:id" 
+            element={<Dashboard
+              editorJsData={editorJsData}
+              setEditorJsData={setEditorJsData}
+              backEndUrl={backEndUrl}
+              isEditMode={true}
+              editorRef={editorRef}
+
             />}
           />
 
