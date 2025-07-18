@@ -1,17 +1,23 @@
 import {useNavigate} from "react-router-dom";
-import { useRef, useState } from 'react';
+// import { useRef } from 'react';
+import { useState } from 'react';
 import EditorJs from "../components/EditorJs";
 import LeftSidebarDashboard from "../components/LeftSidebarDashboard";
 import { handlePreview, handleSubmit, handlePageSelect, handleNewPageSubmit } from "../utils/editorHelper"
+import { useParams } from 'react-router-dom';
 
-function Dashboard({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false }) {
-  // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
-  const editorRef = useRef(null);
+function Dashboard({ editorJsData, setEditorJsData, backEndUrl, editorRef, isEditMode=false }) {
+  
+  // // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
+  // const editorRef = useRef(null);
+
   // Προσθήκη λογικής για custom pages
   const [pages, setPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState('');
   const [newPage, setNewPage] = useState('');
   const [isPinned, setIsPinned] = useState(false);
+
+  const { id } = useParams();
   
   const navigate = useNavigate()
   const navigateToPosts = () => {
@@ -45,17 +51,20 @@ function Dashboard({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false
             isPinned={isPinned}
             setIsPinned={setIsPinned}
             isEditMode={isEditMode}
-            // id={id}
+            id={id}
             handlePageSelect={handlePageSelect}
             handleNewPageSubmit={handleNewPageSubmit}
             pages={pages}
+            setPages={setPages}
             newPage={newPage}
             setNewPage={setNewPage}
+            setSelectedPage={setSelectedPage}
           />          
         </div>
 
         <div className="flex-1 p-4">
           <EditorJs 
+            id={id}
             editorJsData={editorJsData} 
             setEditorJsData={setEditorJsData}
             backEndUrl={backEndUrl}
@@ -65,8 +74,6 @@ function Dashboard({ editorJsData, setEditorJsData, backEndUrl, isEditMode=false
             setPages={setPages}
             selectedPage={selectedPage}
             setSelectedPage={setSelectedPage}
-            newPage={newPage}
-            setNewPage={setNewPage}
             isEditMode={isEditMode}
           />
         </div>

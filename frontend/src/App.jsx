@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useRef } from 'react';
 import './App.css'
 import {BrowserRouter, Routes, Route} from "react-router-dom";
 import Layout from "./layouts/Layout";
@@ -15,6 +16,9 @@ import LoginForm from './service/login/LoginForm';
 import ProtectedRoute from './service/login/ProtectedRoute'
 
 const App = () => {
+
+  // χρειάζομαι μια μεταβλητή για να φορτωσω το Instance απο τον κειμενογράφο
+  const editorRef = useRef(null);
   const [editorJsData, setEditorJsData] = useState({})
  
   const backEndUrl = 'http://localhost:3001'
@@ -31,8 +35,8 @@ const App = () => {
   } = useAuth(backEndUrl); //custom hook με ολες τις λειτουργίες του login
 
   const isAdmin = admin?.roles?.includes("admin");
-  if (isAdmin !== null) console.log("App: is admin?", isAdmin)
-  else console.log("App: is admin? no")
+  // if (isAdmin !== null) console.log("App: is admin?", isAdmin)
+  // else console.log("App: is admin? no")
 
   return (
     <>
@@ -74,6 +78,7 @@ const App = () => {
                     backEndUrl={backEndUrl}
                     handleLogout={handleLogout}
                     message={message}
+                    editorRef={editorRef}
                   />
                 </ProtectedRoute>         
               </>
@@ -102,6 +107,7 @@ const App = () => {
               setEditorJsData={setEditorJsData}
               backEndUrl={backEndUrl}
               isEditMode={true}
+              editorRef={editorRef}
             />}
           />
 

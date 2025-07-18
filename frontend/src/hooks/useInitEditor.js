@@ -118,7 +118,7 @@ export const useInitEditor = (editorRef, backEndUrl) => {
           },
         },
         onReady: () => {
-          console.log('Editor.js is ready');
+          // console.log('Editor.js is ready');
         },
       });
     }

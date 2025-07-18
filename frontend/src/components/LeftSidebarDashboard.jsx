@@ -16,8 +16,10 @@ const LeftSidebarDashboard = ({
   handlePageSelect,
   handleNewPageSubmit,
   pages,
+  setPages,
+  setSelectedPage,
   newPage,
-  setNewPage
+  setNewPage,
 }) => {
 
   return (
@@ -56,6 +58,9 @@ const LeftSidebarDashboard = ({
         newPage={newPage}
         setNewPage={setNewPage}
         handleNewPageSubmit={handleNewPageSubmit}
+        backEndUrl={backEndUrl}
+        setPages={setPages}
+        setSelectedPage={setSelectedPage}
       />
       <button 
         onClick={() => handlePreview(editorRef, setEditorJsData)}

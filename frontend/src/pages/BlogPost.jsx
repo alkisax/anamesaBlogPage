@@ -10,8 +10,8 @@ const BlogPost = ({ backEndUrl, admin }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  if (admin !== null) console.log("BlogPost: is admin?", admin)
-  else console.log("BlogPost: is admin? no")
+  // if (admin !== null) console.log("BlogPost: is admin?", admin)
+  // else console.log("BlogPost: is admin? no")
 
   useEffect(() => {
     const fetchPost = async () => {

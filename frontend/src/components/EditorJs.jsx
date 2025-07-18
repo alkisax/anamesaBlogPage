@@ -1,13 +1,11 @@
 import { useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+// import { useParams } from 'react-router-dom';
 import RenderedEditorJsContent from './RenderedEditorJsContent'
 import { useInitEditor } from '../hooks/useInitEditor';
-import { handlePageSelect, handleNewPageSubmit } from '../utils/editorHelper';
-import CustomPageCreatorComponent from './CustomPageCreatorComponent';
-
 
 const EditorJs = ({ 
+  id,
   editorJsData,
   setEditorJsData,
   backEndUrl,
@@ -17,12 +15,10 @@ const EditorJs = ({
   setPages,
   selectedPage,
   setSelectedPage,
-  newPage,
-  setNewPage,
   isEditMode=false
 }) => {
 
-  const { id } = useParams();
+  // const { id } = useParams();
 
   // ✅ σε χωριστό custom hook μεταφέρθηκε όλη η παραμετροποίηση του editorJs
   useInitEditor(editorRef, backEndUrl);
@@ -33,7 +29,7 @@ const EditorJs = ({
       setPages(res.data)
     }
     getpages()
-  }, [backEndUrl])
+  }, [backEndUrl, setPages])
 
   // 🟧 If in edit mode, fetch post and populate editor
   useEffect(() => {
@@ -59,9 +55,9 @@ const EditorJs = ({
     };
 
     fetchPost();
-  }, [id, isEditMode, backEndUrl, editorRef, setIsPinned]);
+  }, [id, isEditMode, backEndUrl, editorRef, setIsPinned, setSelectedPage]);
 
-  const selectedPageName = pages.find(p => p._id === selectedPage)?.name || ''
+  const selectedPageName = pages?.find?.(p => p._id === selectedPage)?.name || '';
 
   useEffect(() => {
     setEditorJsData(null);
@@ -74,16 +70,6 @@ const EditorJs = ({
           id="editorjs" 
           style={{ border: '2px solid blue', padding: '4px', minHeight: '300px' }} 
         />
-        <div className='btnDiv flex gap-3 mx-3 justify-center'>
-          <CustomPageCreatorComponent 
-            handlePageSelect={handlePageSelect}
-            selectedPage={selectedPage}
-            pages={pages}
-            newPage={newPage}
-            setNewPage={setNewPage}
-            handleNewPageSubmit={handleNewPageSubmit}
-          />
-        </div>
       </div>
 
       <div>
