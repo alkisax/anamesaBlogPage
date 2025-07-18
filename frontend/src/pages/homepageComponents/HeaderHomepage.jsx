@@ -32,16 +32,16 @@ const HeaderHomepage = ({ backEndUrl, admin, handleLogout }) => {
   }, [backEndUrl]);
 
   return (
-    <div className="w-full">
+    <div>
       {/* Header */}
       <>
-          <header 
+        <div
             className="flex items-center justify-between bg-gray-800 text-white p-4"
             onClick={() => {
               // Navigate to homepage
               navigate("/")
             }}
-          >
+        >
           <h1 className="text-xl font-bold">My Blog</h1>
           <button
             onClick={(e) => {
@@ -52,7 +52,7 @@ const HeaderHomepage = ({ backEndUrl, admin, handleLogout }) => {
           >
             ☰
           </button>
-        </header>
+        </div>
       </>
 
 
