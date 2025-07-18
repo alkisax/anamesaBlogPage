@@ -1,3 +1,6 @@
+// λειτουργεί ως middleware και το καλούμε στα routes
+// router.post('/', upload.single('image'), uploadController.uploadFile);
+// αυτό εδώ θα δημιουργήσει ένα req.file που θα χρησιμοποιήθεί στον controller
 const multer = require('multer');
 const path = require('path');
 
@@ -43,18 +46,3 @@ const upload = multer({
 });
 
 module.exports = upload;
-
-
-/*
-Παράδειγμα φίλτρου που δέχεται μόνο εικόνες .jpg ή .png
-js
-Αντιγραφή κώδικα
-fileFilter: (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
-  if(ext === '.jpg' || ext === '.jpeg' || ext === '.png'){
-    cb(null, true); // αποδεκτό αρχείο
-  } else {
-    cb(new Error('Only images are allowed'), false); // απορρίπτω
-  }
-}
-*/

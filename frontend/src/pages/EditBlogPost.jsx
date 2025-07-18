@@ -1,6 +1,6 @@
 import EditorJs from '../components/EditorJs';
 
-const EditBlogPost = ({ editorJsData, setEditorJsData, backEndUrl}) => {
+const EditBlogPost = ({ editorJsData, setEditorJsData, backEndUrl, editorRef }) => {
 
   return (
     <>
@@ -10,6 +10,7 @@ const EditBlogPost = ({ editorJsData, setEditorJsData, backEndUrl}) => {
         setEditorJsData={setEditorJsData}
         backEndUrl={backEndUrl}
         isEditMode={true}
+        editorRef={editorRef}
       />
     </>
   )

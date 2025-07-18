@@ -28,6 +28,7 @@ app.use((req, res, next) => {
 app.use('/ping', (req, res) => {
   res.status(200).json({ message: 'pong' });
 })
+
 app.use('/api/uploads', uploadRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/subPages', subPageRoutes)

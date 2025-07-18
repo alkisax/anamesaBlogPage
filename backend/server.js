@@ -14,6 +14,7 @@ mongoose.connect(process.env.MONGODB_URI)
     app.listen(PORT, () => {
       // το εκανα σαν λινκ για να είναι clickable
       console.log(`Server running on port http://localhost:${PORT}`);
+      console.log(`Swagger api-docs http://localhost:${PORT}/api-docs`);
     });
   })
   .catch((error) => {

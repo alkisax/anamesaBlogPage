@@ -11,18 +11,15 @@ const HeaderHomepage = ({ backEndUrl, admin, handleLogout }) => {
 
   const navigate = useNavigate();
 
-  // const { handleLogout } = useAuth(backEndUrl);
-  // const { admin, handleLogout } = useAuth(backEndUrl);
-  // const isAdmin = admin?.roles?.includes("admin");
-  if (admin !== null) console.log("Header: is admin?", admin)
-  else console.log("Header: is admin? no")
+  // if (admin !== null) console.log("Header: is admin?", admin)
+  // else console.log("Header: is admin? no")
 
   // Fetch subpages from backend
   useEffect(() => {
     const getPages = async () => {
       try {
         const res = await axios.get(`${backEndUrl}/api/subPages`);
-        console.log('fetched subpages', res)
+        // console.log('fetched subpages', res)
         setPages(res.data);
       } catch (error) {
         console.error("Error fetching subpages:", error);
@@ -32,16 +29,16 @@ const HeaderHomepage = ({ backEndUrl, admin, handleLogout }) => {
   }, [backEndUrl]);
 
   return (
-    <div className="w-full">
+    <div>
       {/* Header */}
       <>
-          <header 
+        <div
             className="flex items-center justify-between bg-gray-800 text-white p-4"
             onClick={() => {
               // Navigate to homepage
               navigate("/")
             }}
-          >
+        >
           <h1 className="text-xl font-bold">My Blog</h1>
           <button
             onClick={(e) => {
@@ -52,7 +49,7 @@ const HeaderHomepage = ({ backEndUrl, admin, handleLogout }) => {
           >
             ☰
           </button>
-        </header>
+        </div>
       </>
 
 

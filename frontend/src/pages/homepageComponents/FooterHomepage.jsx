@@ -21,7 +21,7 @@ function FooterHomepage() {
       <footer className="bg-gray-800 text-white p-4 flex justify-center">
         <button
           onClick={navigateToDashboard}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
         >
           Dashboard
         </button>

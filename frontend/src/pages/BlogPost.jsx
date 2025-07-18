@@ -3,17 +3,22 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate  } from 'react-router-dom';
 import RenderedEditorJsContent from "../components/RenderedEditorJsContent";
 
-const BlogPost = ({ backEndUrl }) => {
+const BlogPost = ({ backEndUrl, admin }) => {
   const [loading, setLoading] = useState(true)
   const [post, setPost] = useState(null)
 
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // if (admin !== null) console.log("BlogPost: is admin?", admin)
+  // else console.log("BlogPost: is admin? no")
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
         const response = await axios.get(`${backEndUrl}/api/posts/${id}`);
+        console.log("blogpost:", response);
+        
         setPost(response.data); 
         setLoading(false);
       } catch (error) {
@@ -65,6 +70,7 @@ const BlogPost = ({ backEndUrl }) => {
                   <p className="text-sm text-gray-500 mt-4">
                     {new Date(post.createdAt).toLocaleString()}
                   </p>
+                  {admin && (
                   <div className='btnDiv flex gap-3 mx-3 justify-center'>
                     <button 
                       onClick={navigateToDashboard}
@@ -84,7 +90,8 @@ const BlogPost = ({ backEndUrl }) => {
                     >
                       Delete
                     </button>
-                  </div>
+                  </div>                    
+                  )}
                 </div>
 
             }        
