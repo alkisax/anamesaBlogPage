@@ -24,13 +24,14 @@ const Posts = ({ backEndUrl }) => {
     
     fetchPosts();
   }, [backEndUrl]);
+  
 
   const { currentItems: currentPosts, pageCount, currentPage, handlePageClick, goToPage } =
   usePagination(posts, 10);
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4 text-center">All Posts</h1>
+      {/* <h1 className="text-2xl font-bold mb-4 text-center">All Posts</h1> */}
       <div className="p-4 max-w-4xl mx-auto">
         {loading && <p>Loading...</p>}
         {!loading && posts.length === 0 && <p>No posts found</p>}

@@ -42,7 +42,13 @@ const Subpage = ({ backEndUrl, forcedName }) => {
   const filteredPosts = posts.filter(
     (post) => post.subPage?._id === currentPageId
   )
-  const sortedPosts = [...filteredPosts].sort((a, b) => b.pinned - a.pinned);
+
+  const sortedPosts = [...filteredPosts].sort((a, b) => {
+    if (a.pinned !== b.pinned) {
+      return b.pinned - a.pinned; // pinned first
+    }
+    return new Date(b.createdAt) - new Date(a.createdAt); // newest first
+  });
 
   // Use pagination on sortedPosts
   const { currentItems: currentPosts, pageCount, currentPage, handlePageClick, goToPage } =
@@ -61,7 +67,7 @@ const Subpage = ({ backEndUrl, forcedName }) => {
                 .map((post) => (
                 <Link to={`/posts/${post._id}`} key={post._id}>
                   <div 
-                    className="bg-slate-100 text-black shadow-md rounded-2xl p-6 border border-gray-300 hover:shadow-lg transition-shadow"
+                    className={`bg-slate-100 text-black shadow-md rounded-2xl p-6 hover:shadow-lg transition-shadow ${post.pinned ? "border-4 border-gray-400" : "border border-gray-300"}`}
                   >
                       <RenderedEditorJsContent
                         editorJsData={getPreviewContent(post.content)}
