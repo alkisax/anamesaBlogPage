@@ -17,6 +17,8 @@ const BlogPost = ({ backEndUrl, admin }) => {
     const fetchPost = async () => {
       try {
         const response = await axios.get(`${backEndUrl}/api/posts/${id}`);
+        console.log("blogpost:", response);
+        
         setPost(response.data); 
         setLoading(false);
       } catch (error) {

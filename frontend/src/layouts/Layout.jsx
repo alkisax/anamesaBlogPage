@@ -8,7 +8,13 @@ function Layout({ backEndUrl, admin, isAdmin, handleLogout }) {
     <>
       <div className="flex flex-col min-h-screen w-full">
         
-        <header className="w-full bg-gray-800 text-white py-4 px-6">
+        <header
+          className="
+            w-full bg-gray-800 text-white py-4 px-6
+            fixed top-0 left-0
+            z-50
+          "
+        >
           <HeaderHomepage
             backEndUrl={backEndUrl}
             admin={admin}
@@ -16,9 +22,11 @@ function Layout({ backEndUrl, admin, isAdmin, handleLogout }) {
           />            
         </header>
 
-
         <main 
-          className="flex-grow flex items-center justify-center bg-gray-50 w-full"
+          className="
+            pt-24
+            flex-grow flex items-center justify-center bg-gray-50 w-full
+          "
         >
           <Outlet />
         </main>
@@ -26,7 +34,7 @@ function Layout({ backEndUrl, admin, isAdmin, handleLogout }) {
         <FooterHomepage
           admin={admin}
           isAdmin={isAdmin}
-          className="w-full bg-gray-900 text-white"
+          className="w-full bg-gray-900 text-white relative z-50"
         />
         
       </div>

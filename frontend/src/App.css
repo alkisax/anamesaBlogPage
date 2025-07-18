@@ -14,7 +14,7 @@
 }
 /* Στυλ για ολόκληρο το editor container — εμφανές περίγραμμα, padding και ελάχιστο ύψος */
 .codex-editor {
-  border: 1px solid #ccc;
+  border: 1px solid #000000;
   padding: 16px;
   min-height: 300px;
 }

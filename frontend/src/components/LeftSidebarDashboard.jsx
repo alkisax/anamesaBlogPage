@@ -27,7 +27,7 @@ const LeftSidebarDashboard = ({
       className="
         bg-blue-100 text-blue-900
         p-4
-        flex flex-row flex-wrap sm:flex-col
+        flex flex-col flex-wrap sm:flex-col
         sm:h-full
         gap-2
         w-full

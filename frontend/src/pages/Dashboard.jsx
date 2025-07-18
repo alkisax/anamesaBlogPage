@@ -35,10 +35,12 @@ function Dashboard({
 
   return (
     <>
-      <div className="flex min-h-screen flex-col sm:flex-row">
+      <div className="flex min-h-screen flex-col sm:flex-row z-40">
 
         <div 
           className="
+            mt-3
+            md:fixed md:left-0 md:h-[calc(100vh-6rem)] 
             flex-shrink-0 
             w-full md:max-w-44 sm:w-44
             sm:min-h-screen
@@ -68,7 +70,12 @@ function Dashboard({
           />          
         </div>
 
-        <div className="flex-1 p-4">
+        <div 
+          className="
+            ml-45 mt-15
+            flex-1 p-4
+          "
+        >
           <EditorJs 
             id={id}
             editorJsData={editorJsData} 

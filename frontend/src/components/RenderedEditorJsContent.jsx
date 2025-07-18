@@ -45,6 +45,8 @@ const RenderedEditorJsContent = ({ editorJsData, subPageName }) => {
             // εδω το alignment είναι tune γιατι το παίρνει απο AlignmentTuneTool
             const Tag = `h${block.data.level || 2}`;
             const alignment = block.tunes?.alignment?.alignment || 'left';
+            console.log("reached text header");
+            console.log(block.data.level);
             return (
               <Tag 
                 key={index}

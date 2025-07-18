@@ -34,6 +34,20 @@ body {
   min-height: 100vh; */
   background-color: var(--bg-color);
 }
+
+h1 {
+  font-size: 2.25rem; /* same as text-4xl */
+  font-weight: bold;
+}
+h2 {
+  font-size: 1.875rem; /* text-3xl */
+  font-weight: 600;
+}
+h3 {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 600;
+}
+
 /* 
 h1 {
   font-size: 3.2em;
