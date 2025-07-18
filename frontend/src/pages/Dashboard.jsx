@@ -19,8 +19,8 @@ function Dashboard({ editorJsData, setEditorJsData, backEndUrl }) {
         <div 
           className="
             flex-shrink-0 
-            md:max-w-44 w-full sm:w-44
-            h-full
+            w-full md:max-w-44 sm:w-44
+            sm:min-h-screen
           "
         >
           <LeftSidebarDashboard />          
