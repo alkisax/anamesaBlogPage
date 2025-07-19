@@ -37,6 +37,7 @@ export const handleSubmit = async (editorRef, setEditorJsData, isEditMode, id, b
           pinned: isPinned
         })
         console.log("✅ Post updated");
+        alert("Post updated successfully!");
       } else {
         await axios.post(`${backEndUrl}/api/posts`, {
           content: outputData,
@@ -44,6 +45,7 @@ export const handleSubmit = async (editorRef, setEditorJsData, isEditMode, id, b
           pinned: isPinned
         })
         console.log("✅ Post created");
+        alert("Post created successfully!");
       }
 
       // για την αποθήκευση στην Mongo        
