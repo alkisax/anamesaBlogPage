@@ -4,6 +4,8 @@ const fs = require('fs').promises;  // note: require fs.promises
 const path = require('path');
 const uploadDao = require('../daos/upload.dao');
 
+const DEPLOY_URL = process.env.DEPLOY_URL
+
 const renderUploadPage = async (req, res) => {
   try {
     const items = await uploadDao.getAllUploads();
@@ -55,7 +57,7 @@ const uploadFile = async (req, res) => {
     res.status(200).json({
       success: 1,
       file: {
-        url: `http://localhost:3001/uploads/${req.file.filename}`,
+        url: `${DEPLOY_URL}/uploads/${req.file.filename}`,
         name: saved.name,
         size: saved.file.size,
         type: saved.file.contentType,

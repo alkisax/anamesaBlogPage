@@ -3,6 +3,7 @@ const IntroHome = () => {
 
   return (
     <>
+    // TODO
     <div
       className="flex flex-col items-center text-center px-4"
     >
