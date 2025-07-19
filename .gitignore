@@ -1,3 +1,9 @@
+# Ignore all dist folders
+dist/
+
+# But don't ignore backend/dist
+!backend/dist
+
 # Logs
 logs
 *.log
@@ -89,7 +95,7 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+# dist
 
 # Gatsby files
 .cache/

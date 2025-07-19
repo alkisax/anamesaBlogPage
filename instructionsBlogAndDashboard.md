@@ -29,6 +29,13 @@ git push origin main
 ```
 - αυτή η λύση δεν μου αρέσει πολύ αλλα θα το δω ξανα στο επόμενο σοβαρο commit γιατί τώρα δούλεψε
 
+- create version
+```bash
+git tag -a v0.1.0 -m "Pre-release (undeployed)"
+git push origin v0.1.0
+git tag -l
+```
+
 # δημιουργία βασικού frontend/backend
 ### backend
 ```
