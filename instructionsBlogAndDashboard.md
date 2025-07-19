@@ -36,6 +36,22 @@ git push origin v0.1.0
 git tag -l
 ```
 
+- to replace last faulty commit in main
+```bash
+User@DESKTOP-PD058OQ MINGW64 /e/coding/BlogAndDashboard (wip)
+git add .
+git commit -m "deploy8"
+git push origin wip
+git checkout main
+git reset --soft HEAD~1
+git checkout wip -- .
+git add .
+git commit -m "deploy"
+git push origin main --force
+git log main --oneline
+git checkout wip
+```
+
 # δημιουργία βασικού frontend/backend
 ### backend
 ```
