@@ -1,9 +1,19 @@
 import MainHomepage from "./homepageComponents/MainHomepage";
+import IntroHome from "./homepageComponents/IntroHome"
+import OnlyPinnedPostsAndLastPosts from "../components/OnlyPinnedPostsAndLastPosts";
 
 function Homepage({ backEndUrl, editorJsData, setEditorJsData, username, password, setUsername,setPassword, handleLogin }) {
 
   return (
     <>
+      <div>
+        <IntroHome />
+        <OnlyPinnedPostsAndLastPosts 
+          backEndUrl={backEndUrl}
+        />    
+      </div>
+
+
       <div className="flex flex-col min-h-screen">
         <MainHomepage 
           editorJsData={editorJsData} 
@@ -17,7 +27,7 @@ function Homepage({ backEndUrl, editorJsData, setEditorJsData, username, passwor
         />
       </div>
     </>
-  );
+  )
 }
 
 export default Homepage;
