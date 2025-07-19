@@ -40,7 +40,7 @@ git tag -l
 ```bash
 User@DESKTOP-PD058OQ MINGW64 /e/coding/BlogAndDashboard (wip)
 git add .
-git commit -m "deploy5"
+git commit -m "deploy7"
 git push origin wip
 git checkout main
 git reset --soft HEAD~1
