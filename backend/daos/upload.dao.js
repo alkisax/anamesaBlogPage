@@ -1,7 +1,7 @@
 const Upload = require('../models/upload.model');
 
 const getAllUploads = () => {
- return Upload.find({});
+ return Upload.find({}, { 'file.data': 0 });
 }
 const createUpload = (imageData) => {
   return Upload.create(imageData)
